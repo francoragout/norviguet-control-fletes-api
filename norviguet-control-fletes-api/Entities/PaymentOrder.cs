@@ -1,9 +1,10 @@
 ﻿namespace norviguet_control_fletes_api.Entities
 {
-    public class Seller
+    public class PaymentOrder
     {
         public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
+        public int PointOfSale { get; set; }
+        public int OrderNumber { get; set; }
         public ICollection<Order> Orders { get; set; } = new List<Order>();
     }
 }

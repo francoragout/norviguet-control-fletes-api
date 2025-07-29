@@ -1,6 +1,6 @@
 ﻿namespace norviguet_control_fletes_api.Entities
 {
-    public class Seller
+    public class Carrier
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;

@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using norviguet_control_fletes_api.Data;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddDbContext<NorviguetDbContext>(options =>
+       options.UseSqlServer(builder.Configuration.GetConnectionString("NorviguetDatabase")));
 
 var app = builder.Build();
 
