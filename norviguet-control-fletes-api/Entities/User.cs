@@ -23,5 +23,7 @@
         public string PasswordHash { get; set; } = string.Empty;
         public UserRole Role { get; set; } = UserRole.Pending;
         public UserStatus Status { get; set; } = UserStatus.Inactive;
+        public string? RefreshToken { get; set; }
+        public DateTime? RefreshTokenExpiryTime { get; set; }
     }
 }
