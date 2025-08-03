@@ -1,8 +1,13 @@
-﻿namespace norviguet_control_fletes_api.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace norviguet_control_fletes_api.Models
 {
     public class LoginDto
     {
+        [Required]
+        [EmailAddress]
         public string Email { get; set; } = string.Empty;
+        [Required]
         public string Password { get; set; } = string.Empty;
     }
 }
