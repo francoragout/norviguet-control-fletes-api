@@ -13,7 +13,7 @@ namespace norviguet_control_fletes_api.Services
 {
     public class AuthService(NorviguetDbContext context, IConfiguration configuration) : IAuthService
     {
-        public async Task<TokenResponseDto?> LoginAsync(UserDto request)
+        public async Task<TokenResponseDto?> LoginAsync(LoginDto request)
         {
             var user = await context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
             if (user is null)
@@ -37,7 +37,7 @@ namespace norviguet_control_fletes_api.Services
             };
         }
 
-        public async Task<User?> RegisterAsync(UserDto request)
+        public async Task<User?> RegisterAsync(RegisterDto request)
         {
             if (await context.Users.AnyAsync(u => u.Email == request.Email))
             {
@@ -48,6 +48,8 @@ namespace norviguet_control_fletes_api.Services
             var hashedPassword = new PasswordHasher<User>()
                 .HashPassword(user, request.Password);
 
+            user.FirstName = request.FirstName;
+            user.LastName = request.LastName;
             user.Email = request.Email;
             user.PasswordHash = hashedPassword;
 
