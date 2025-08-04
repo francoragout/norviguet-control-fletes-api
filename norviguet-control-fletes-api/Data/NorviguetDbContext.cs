@@ -75,5 +75,10 @@ namespace norviguet_control_fletes_api.Data
 
             base.OnModelCreating(modelBuilder);
         }
+
+        internal object Map<T>(List<Carrier> carriers)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
