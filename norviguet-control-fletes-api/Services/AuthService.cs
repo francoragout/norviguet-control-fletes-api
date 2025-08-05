@@ -59,25 +59,15 @@ namespace norviguet_control_fletes_api.Services
             return user;
         }
 
-        public async Task<TokenResponseDto?> RefreshTokensAsync(RefreshTokenRequestDto request)
+        public async Task<TokenResponseDto?> RefreshTokensAsync(string refreshToken)
         {
-            var user = await ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);
+            var user = await context.Users.FirstOrDefaultAsync(u =>
+                u.RefreshToken == refreshToken &&
+                u.RefreshTokenExpiryTime > DateTime.UtcNow);
             if (user is null)
                 return null;
 
             return await CreateTokenResponse(user);
-        }
-
-        private async Task<User?> ValidateRefreshTokenAsync(int userId, string refreshToken)
-        {
-            var user = await context.Users.FindAsync(userId);
-            if (user is null || user.RefreshToken != refreshToken
-                || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
-            {
-                return null;
-            }
-
-            return user;
         }
 
         private string GenerateRefreshToken()
