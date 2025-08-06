@@ -81,6 +81,7 @@ namespace norviguet_control_fletes_api.Controllers
                 return NotFound();
 
             _context.Carriers.Remove(carrier);
+
             await _context.SaveChangesAsync();
 
             return NoContent();

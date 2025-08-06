@@ -30,10 +30,11 @@ namespace norviguet_control_fletes_api.Services
         }
         private async Task<TokenResponseDto> CreateTokenResponse(User? user)
         {
+            // Only return access token, do not include refresh token in DTO
+            await GenerateAndSaveRefreshTokenAsync(user);
             return new TokenResponseDto
             {
-                AccessToken = CreateToken(user),
-                RefreshToken = await GenerateAndSaveRefreshTokenAsync(user)
+                AccessToken = CreateToken(user)
             };
         }
 
@@ -110,6 +111,16 @@ namespace norviguet_control_fletes_api.Services
             );
 
             return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
+        }
+
+        public async Task<User?> GetUserByEmailAsync(string email)
+        {
+            return await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        }
+
+        public async Task<User?> GetUserByRefreshTokenAsync(string refreshToken)
+        {
+            return await context.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
         }
     }
 }
