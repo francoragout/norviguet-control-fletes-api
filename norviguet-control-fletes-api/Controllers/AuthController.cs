@@ -40,16 +40,24 @@ namespace norviguet_control_fletes_api.Controllers
 
             // Recuperar el usuario para obtener el refresh token actualizado
             var user = await _authService.GetUserByEmailAsync(request.Email);
-            if (user?.RefreshToken is null)
+            if (user == null)
+                return StatusCode(500, "No se pudo generar el refresh token.");
+
+            // Obtener el refresh token activo más reciente
+            var refreshToken = user.RefreshTokens
+                .Where(rt => rt.IsActive)
+                .OrderByDescending(rt => rt.CreatedAt)
+                .FirstOrDefault();
+            if (refreshToken == null)
                 return StatusCode(500, "No se pudo generar el refresh token.");
 
             // Set refresh token as HTTP-only, Secure cookie
-            Response.Cookies.Append("refreshToken", user.RefreshToken, new CookieOptions
+            Response.Cookies.Append("refreshToken", refreshToken.Token, new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.Strict,
-                Expires = DateTimeOffset.UtcNow.AddDays(7)
+                Expires = refreshToken.ExpiresAt
             });
 
             // Only return access token in body
@@ -59,29 +67,55 @@ namespace norviguet_control_fletes_api.Controllers
         [HttpPost("refresh-token")]
         public async Task<ActionResult<TokenResponseDto>> RefreshToken()
         {
-            var refreshToken = Request.Cookies["refreshToken"];
-            if (string.IsNullOrEmpty(refreshToken))
+            var refreshTokenValue = Request.Cookies["refreshToken"];
+            if (string.IsNullOrEmpty(refreshTokenValue))
                 return Unauthorized("No refresh token cookie found.");
 
-            var result = await _authService.RefreshTokensAsync(refreshToken);
+            var result = await _authService.RefreshTokensAsync(refreshTokenValue);
             if (result is null || result.AccessToken is null)
                 return Unauthorized("Invalid refresh token.");
 
             // Recuperar el usuario para obtener el refresh token actualizado
-            var user = await _authService.GetUserByRefreshTokenAsync(refreshToken);
-            if (user?.RefreshToken is null)
+            var user = await _authService.GetUserByRefreshTokenAsync(refreshTokenValue);
+            if (user == null)
                 return StatusCode(500, "No se pudo generar el refresh token.");
 
-            Response.Cookies.Append("refreshToken", user.RefreshToken, new CookieOptions
+            var newRefreshToken = user.RefreshTokens
+                .Where(rt => rt.IsActive)
+                .OrderByDescending(rt => rt.CreatedAt)
+                .FirstOrDefault();
+            if (newRefreshToken == null)
+                return StatusCode(500, "No se pudo generar el refresh token.");
+
+            Response.Cookies.Append("refreshToken", newRefreshToken.Token, new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.Strict,
-                Expires = DateTimeOffset.UtcNow.AddDays(7)
+                Expires = newRefreshToken.ExpiresAt
             });
 
             // Only return access token in body
             return Ok(new TokenResponseDto { AccessToken = result.AccessToken });
+        }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            var refreshToken = Request.Cookies["refreshToken"];
+            if (!string.IsNullOrEmpty(refreshToken))
+            {
+                await _authService.InvalidateRefreshTokenAsync(refreshToken);
+            }
+            // Remove the refreshToken cookie by setting it expired
+            Response.Cookies.Append("refreshToken", string.Empty, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTimeOffset.UtcNow.AddDays(-1) // Expire immediately
+            });
+            return NoContent();
         }
 
         [Authorize]

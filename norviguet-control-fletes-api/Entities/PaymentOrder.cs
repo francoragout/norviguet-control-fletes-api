@@ -5,6 +5,8 @@
         public int Id { get; set; }
         public int PointOfSale { get; set; }
         public int OrderNumber { get; set; }
+
+        // Relación uno a muchos con Order
         public ICollection<Order> Orders { get; set; } = new List<Order>();
     }
 }

@@ -15,7 +15,7 @@ namespace norviguet_control_fletes_api.Services
     {
         public async Task<TokenResponseDto?> LoginAsync(LoginDto request)
         {
-            var user = await context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            var user = await context.Users.Include(u => u.RefreshTokens).FirstOrDefaultAsync(u => u.Email == request.Email);
             if (user is null)
             {
                 return null;
@@ -62,13 +62,12 @@ namespace norviguet_control_fletes_api.Services
 
         public async Task<TokenResponseDto?> RefreshTokensAsync(string refreshToken)
         {
-            var user = await context.Users.FirstOrDefaultAsync(u =>
-                u.RefreshToken == refreshToken &&
-                u.RefreshTokenExpiryTime > DateTime.UtcNow);
-            if (user is null)
+            var tokenEntity = await context.RefreshTokens.Include(rt => rt.User)
+                .FirstOrDefaultAsync(rt => rt.Token == refreshToken && rt.IsActive);
+            if (tokenEntity == null)
                 return null;
 
-            return await CreateTokenResponse(user);
+            return await CreateTokenResponse(tokenEntity.User);
         }
 
         private string GenerateRefreshToken()
@@ -81,11 +80,17 @@ namespace norviguet_control_fletes_api.Services
 
         private async Task<string> GenerateAndSaveRefreshTokenAsync(User user)
         {
-            var refreshToken = GenerateRefreshToken();
-            user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            // Opcional: invalidar tokens viejos aquí si solo quieres uno activo por usuario
+            var refreshToken = new RefreshToken
+            {
+                Token = GenerateRefreshToken(),
+                UserId = user.Id,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddDays(7)
+            };
+            context.RefreshTokens.Add(refreshToken);
             await context.SaveChangesAsync();
-            return refreshToken;
+            return refreshToken.Token;
         }
 
         private string CreateToken(User user)
@@ -115,12 +120,24 @@ namespace norviguet_control_fletes_api.Services
 
         public async Task<User?> GetUserByEmailAsync(string email)
         {
-            return await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            return await context.Users.Include(u => u.RefreshTokens).FirstOrDefaultAsync(u => u.Email == email);
         }
 
         public async Task<User?> GetUserByRefreshTokenAsync(string refreshToken)
         {
-            return await context.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
+            var tokenEntity = await context.RefreshTokens.Include(rt => rt.User)
+                .FirstOrDefaultAsync(rt => rt.Token == refreshToken && rt.IsActive);
+            return tokenEntity?.User;
+        }
+
+        public async Task InvalidateRefreshTokenAsync(string refreshToken)
+        {
+            var tokenEntity = await context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == refreshToken && rt.IsActive);
+            if (tokenEntity != null)
+            {
+                tokenEntity.RevokedAt = DateTime.UtcNow;
+                await context.SaveChangesAsync();
+            }
         }
     }
 }

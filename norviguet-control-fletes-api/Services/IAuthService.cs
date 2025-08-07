@@ -10,5 +10,6 @@ namespace norviguet_control_fletes_api.Services
         Task<TokenResponseDto?> RefreshTokensAsync(string refreshToken);
         Task<User?> GetUserByEmailAsync(string email);
         Task<User?> GetUserByRefreshTokenAsync(string refreshToken);
+        Task InvalidateRefreshTokenAsync(string refreshToken);
     }
 }

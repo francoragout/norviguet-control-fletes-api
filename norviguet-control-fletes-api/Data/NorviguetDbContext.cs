@@ -6,6 +6,7 @@ namespace norviguet_control_fletes_api.Data
     public class NorviguetDbContext(DbContextOptions<NorviguetDbContext> options) : DbContext(options)
     {
         public DbSet<User> Users { get; set; } = null!;
+        public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
         public DbSet<Order> Orders { get; set; } = null!;
         public DbSet<Customer> Customers { get; set; } = null!;
         public DbSet<Location> Locations { get; set; } = null!;
@@ -41,6 +42,12 @@ namespace norviguet_control_fletes_api.Data
                 .HasPrecision(18, 2);
 
             // Relationships
+
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.RefreshTokens)
+                .WithOne(rt => rt.User)
+                .HasForeignKey(rt => rt.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.Carrier)
