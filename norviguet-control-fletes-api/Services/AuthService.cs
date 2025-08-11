@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using norviguet_control_fletes_api.Data;
 using norviguet_control_fletes_api.Entities;
-using norviguet_control_fletes_api.Models;
+using norviguet_control_fletes_api.Models.Auth;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -28,13 +28,25 @@ namespace norviguet_control_fletes_api.Services
 
             return await CreateTokenResponse(user);
         }
-        private async Task<TokenResponseDto> CreateTokenResponse(User? user)
+
+        private async Task<TokenResponseDto> CreateTokenResponse(User user)
         {
-            // Only return access token, do not include refresh token in DTO
-            await GenerateAndSaveRefreshTokenAsync(user);
+            // Revocar todos los tokens activos previos
+            var activeTokens = user.RefreshTokens.Where(rt => rt.IsActive).ToList();
+            foreach (var token in activeTokens)
+            {
+                token.RevokedAt = DateTime.UtcNow;
+            }
+            await context.SaveChangesAsync();
+
+            // Generar y guardar nuevo refresh token
+            var refreshToken = await GenerateAndSaveRefreshTokenAsync(user);
+            var refreshTokenEntity = await context.RefreshTokens.OrderByDescending(rt => rt.CreatedAt).FirstAsync(rt => rt.Token == refreshToken);
             return new TokenResponseDto
             {
-                AccessToken = CreateToken(user)
+                AccessToken = CreateToken(user),
+                RefreshToken = refreshToken,
+                RefreshTokenExpiresAt = refreshTokenEntity.ExpiresAt
             };
         }
 
@@ -63,9 +75,13 @@ namespace norviguet_control_fletes_api.Services
         public async Task<TokenResponseDto?> RefreshTokensAsync(string refreshToken)
         {
             var tokenEntity = await context.RefreshTokens.Include(rt => rt.User)
-                .FirstOrDefaultAsync(rt => rt.Token == refreshToken && rt.IsActive);
-            if (tokenEntity == null)
+                .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+            if (tokenEntity == null || !tokenEntity.IsActive || tokenEntity.ExpiresAt < DateTime.UtcNow)
                 return null;
+
+            // Revocar el token actual
+            tokenEntity.RevokedAt = DateTime.UtcNow;
+            await context.SaveChangesAsync();
 
             return await CreateTokenResponse(tokenEntity.User);
         }
@@ -80,7 +96,6 @@ namespace norviguet_control_fletes_api.Services
 
         private async Task<string> GenerateAndSaveRefreshTokenAsync(User user)
         {
-            // Opcional: invalidar tokens viejos aquí si solo quieres uno activo por usuario
             var refreshToken = new RefreshToken
             {
                 Token = GenerateRefreshToken(),
@@ -99,7 +114,7 @@ namespace norviguet_control_fletes_api.Services
             {
                 new Claim(ClaimTypes.Name, user.Email),
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Role, user.Role.ToString()) // Convert UserRole to string
+                new Claim(ClaimTypes.Role, user.Role.ToString())
             };
 
             var key = new SymmetricSecurityKey(
@@ -138,6 +153,16 @@ namespace norviguet_control_fletes_api.Services
                 tokenEntity.RevokedAt = DateTime.UtcNow;
                 await context.SaveChangesAsync();
             }
+        }
+
+        public async Task<RefreshToken?> GetLatestActiveRefreshTokenAsync(User user)
+        {
+            var refreshToken = user.RefreshTokens
+                .Where(rt => rt.IsActive)
+                .OrderByDescending(rt => rt.CreatedAt)
+                .FirstOrDefault();
+
+            return await Task.FromResult(refreshToken);
         }
     }
 }

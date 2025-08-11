@@ -1,5 +1,5 @@
 ﻿using norviguet_control_fletes_api.Entities;
-using norviguet_control_fletes_api.Models;
+using norviguet_control_fletes_api.Models.Auth;
 
 namespace norviguet_control_fletes_api.Services
 {
@@ -11,5 +11,6 @@ namespace norviguet_control_fletes_api.Services
         Task<User?> GetUserByEmailAsync(string email);
         Task<User?> GetUserByRefreshTokenAsync(string refreshToken);
         Task InvalidateRefreshTokenAsync(string refreshToken);
+        Task<RefreshToken?> GetLatestActiveRefreshTokenAsync(User user);
     }
 }

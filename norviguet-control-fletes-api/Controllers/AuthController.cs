@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using norviguet_control_fletes_api.Models;
+using norviguet_control_fletes_api.Models.Auth;
 using norviguet_control_fletes_api.Models.User;
 using norviguet_control_fletes_api.Services;
 
@@ -38,30 +38,16 @@ namespace norviguet_control_fletes_api.Controllers
             if (result is null)
                 return BadRequest("Invalid username or password.");
 
-            // Recuperar el usuario para obtener el refresh token actualizado
-            var user = await _authService.GetUserByEmailAsync(request.Email);
-            if (user == null)
-                return StatusCode(500, "No se pudo generar el refresh token.");
-
-            // Obtener el refresh token activo más reciente
-            var refreshToken = user.RefreshTokens
-                .Where(rt => rt.IsActive)
-                .OrderByDescending(rt => rt.CreatedAt)
-                .FirstOrDefault();
-            if (refreshToken == null)
-                return StatusCode(500, "No se pudo generar el refresh token.");
-
             // Set refresh token as HTTP-only, Secure cookie
-            Response.Cookies.Append("refreshToken", refreshToken.Token, new CookieOptions
+            Response.Cookies.Append("refreshToken", result.RefreshToken, new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.Strict,
-                Expires = refreshToken.ExpiresAt
+                Expires = result.RefreshTokenExpiresAt
             });
 
-            // Only return access token in body
-            return Ok(new TokenResponseDto { AccessToken = result.AccessToken });
+            return Ok(result);
         }
 
         [HttpPost("refresh-token")]
@@ -73,30 +59,17 @@ namespace norviguet_control_fletes_api.Controllers
 
             var result = await _authService.RefreshTokensAsync(refreshTokenValue);
             if (result is null || result.AccessToken is null)
-                return Unauthorized("Invalid refresh token.");
+                return Unauthorized("Invalid or expired refresh token.");
 
-            // Recuperar el usuario para obtener el refresh token actualizado
-            var user = await _authService.GetUserByRefreshTokenAsync(refreshTokenValue);
-            if (user == null)
-                return StatusCode(500, "No se pudo generar el refresh token.");
-
-            var newRefreshToken = user.RefreshTokens
-                .Where(rt => rt.IsActive)
-                .OrderByDescending(rt => rt.CreatedAt)
-                .FirstOrDefault();
-            if (newRefreshToken == null)
-                return StatusCode(500, "No se pudo generar el refresh token.");
-
-            Response.Cookies.Append("refreshToken", newRefreshToken.Token, new CookieOptions
+            Response.Cookies.Append("refreshToken", result.RefreshToken, new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.Strict,
-                Expires = newRefreshToken.ExpiresAt
+                Expires = result.RefreshTokenExpiresAt
             });
 
-            // Only return access token in body
-            return Ok(new TokenResponseDto { AccessToken = result.AccessToken });
+            return Ok(result);
         }
 
         [HttpPost("logout")]

@@ -1,4 +1,4 @@
-﻿namespace norviguet_control_fletes_api.Models
+﻿namespace norviguet_control_fletes_api.Models.Auth
 {
     public class RefreshTokenRequestDto
     {
