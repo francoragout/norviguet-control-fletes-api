@@ -23,9 +23,7 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<ActionResult<List<UserDto>>> GetUsers()
         {
             var users = await _context.Users.ToListAsync();
-
             var result = _mapper.Map<List<UserDto>>(users);
-
             return Ok(result);
         }
 
@@ -34,17 +32,11 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<ActionResult<UserDto>> UpdateUser(int id, [FromBody] UpdateUserDto dto)
         {
             var user = await _context.Users.FindAsync(id);
-
             if (user == null)
                 return NotFound();
-
             _mapper.Map(dto, user);
-
             await _context.SaveChangesAsync();
-
-            var resultDto = _mapper.Map<UserDto>(user);
-
-            return Ok(resultDto);
+            return NoContent();
         }
 
         [Authorize(Roles = "Admin")]
@@ -52,14 +44,10 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<IActionResult> DeleteUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
-
             if (user == null)
                 return NotFound();
-
             _context.Users.Remove(user);
-
             await _context.SaveChangesAsync();
-
             return NoContent();
         }
     }

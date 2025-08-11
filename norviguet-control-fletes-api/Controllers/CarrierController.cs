@@ -24,9 +24,7 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<ActionResult<List<CarrierDto>>> GetCarriers()
         {
             var carriers = await _context.Carriers.ToListAsync();
-
             var result = _mapper.Map<List<CarrierDto>>(carriers);
-
             return Ok(result);
         }
 
@@ -34,12 +32,9 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<ActionResult<CarrierDto>> GetCarrier(int id)
         {
             var carrier = await _context.Carriers.FindAsync(id);
-
             if (carrier == null)
                 return NotFound();
-
             var result = _mapper.Map<CarrierDto>(carrier);
-
             return Ok(result);
         }
 
@@ -47,12 +42,9 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<ActionResult<CarrierDto>> CreateCarrier([FromBody] CreateCarrierDto dto)
         {
             var carrier = _mapper.Map<Carrier>(dto);
-
             _context.Carriers.Add(carrier);
             await _context.SaveChangesAsync();
-
             var resultDto = _mapper.Map<CarrierDto>(carrier);
-
             return CreatedAtAction(nameof(GetCarrier), new { id = carrier.Id }, resultDto);
         }
 
@@ -61,14 +53,10 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<IActionResult> UpdateCarrier(int id, [FromBody] UpdateCarrierDto dto)
         {
             var carrier = await _context.Carriers.FindAsync(id);
-
             if (carrier == null)
                 return NotFound();
-
             _mapper.Map(dto, carrier);
-
             await _context.SaveChangesAsync();
-
             return NoContent();
         }
 
@@ -76,14 +64,10 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<IActionResult> DeleteCarrier(int id)
         {
             var carrier = await _context.Carriers.FindAsync(id);
-
             if (carrier == null)
                 return NotFound();
-
             _context.Carriers.Remove(carrier);
-
             await _context.SaveChangesAsync();
-
             return NoContent();
         }
     }

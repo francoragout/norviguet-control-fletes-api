@@ -25,9 +25,7 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<ActionResult<List<CustomerDto>>> GetCustomers()
         {
             var customers = await _context.Customers.ToListAsync();
-
             var result = _mapper.Map<List<CustomerDto>>(customers);
-
             return Ok(result);
         }
 
@@ -35,12 +33,9 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<ActionResult<CustomerDto>> GetCustomer(int id)
         {
             var customer = await _context.Customers.FindAsync(id);
-
             if (customer == null)
                 return NotFound();
-
             var result = _mapper.Map<CustomerDto>(customer);
-
             return Ok(result);
         }
 
@@ -48,12 +43,9 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<ActionResult<CustomerDto>> CreateCustomer([FromBody] CreateCustomerDto dto)
         {
             var customer = _mapper.Map<Customer>(dto);
-
             _context.Customers.Add(customer);
             await _context.SaveChangesAsync();
-
             var resultDto = _mapper.Map<CustomerDto>(customer);
-
             return CreatedAtAction(nameof(GetCustomer), new { id = customer.Id }, resultDto);
         }
 
@@ -61,16 +53,11 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<ActionResult<CustomerDto>> UpdateCustomer(int id, [FromBody] UpdateCustomerDto dto)
         {
             var customer = await _context.Customers.FindAsync(id);
-
             if (customer == null)
                 return NotFound();
-
             _mapper.Map(dto, customer);
-
             await _context.SaveChangesAsync();
-
             var resultDto = _mapper.Map<CustomerDto>(customer);
-
             return Ok(resultDto);
         }
 
@@ -78,14 +65,10 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<IActionResult> DeleteCustomer(int id)
         {
             var customer = await _context.Customers.FindAsync(id);
-
             if (customer == null)
                 return NotFound();
-
             _context.Customers.Remove(customer);
-
             await _context.SaveChangesAsync();
-
             return NoContent();
         }
     }
