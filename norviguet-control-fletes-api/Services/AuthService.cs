@@ -61,8 +61,7 @@ namespace norviguet_control_fletes_api.Services
             var hashedPassword = new PasswordHasher<User>()
                 .HashPassword(user, request.Password);
 
-            user.FirstName = request.FirstName;
-            user.LastName = request.LastName;
+            user.Name = request.Name;
             user.Email = request.Email;
             user.PasswordHash = hashedPassword;
 

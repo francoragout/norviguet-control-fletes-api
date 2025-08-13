@@ -5,15 +5,9 @@ namespace norviguet_control_fletes_api.Models.Auth
     public class RegisterDto
     {
         [Required]
-        [MinLength(2, ErrorMessage = "First name must be at least 2 characters long.")]
-        [MaxLength(30, ErrorMessage = "First name cannot exceed 30 characters.")]
-        [RegularExpression(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s'-]+$", ErrorMessage = "First name can only contain letters and spaces.")]
-        public string FirstName { get; set; } = string.Empty;
-        [Required]
-        [MinLength(2, ErrorMessage = "Last name must be at least 2 characters long.")]
-        [MaxLength(30, ErrorMessage = "Last name cannot exceed 30 characters.")]
-        [RegularExpression(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s'-]+$", ErrorMessage = "Last name can only contain letters and spaces.")]
-        public string LastName { get; set; } = string.Empty;
+        [StringLength(50, ErrorMessage = "The name must be between 1 and 50 characters long.")]
+        [RegularExpression(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s'-]+$", ErrorMessage = "Name can only contain letters and spaces.")]
+        public string Name { get; set; } = string.Empty;
         [Required]
         [EmailAddress]
         public string Email { get; set; } = string.Empty;

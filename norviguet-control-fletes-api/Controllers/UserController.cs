@@ -34,8 +34,21 @@ namespace norviguet_control_fletes_api.Controllers
             var user = await _context.Users.FindAsync(id);
             if (user == null)
                 return NotFound();
+
+            // Guarda los valores originales
+            var originalRole = user.Role.ToString();
+            var originalStatus = user.Status.ToString();
+
+            // Aplica los cambios
             _mapper.Map(dto, user);
-            await _context.SaveChangesAsync();
+
+            // Solo actualiza UpdatedAt si hubo cambios
+            if (user.Role.ToString() != originalRole || user.Status.ToString() != originalStatus)
+            {
+                user.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
+
             return NoContent();
         }
 
