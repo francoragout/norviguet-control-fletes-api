@@ -25,10 +25,9 @@ namespace norviguet_control_fletes_api.Controllers
         {
             var user = await _authService.RegisterAsync(request);
             if (user is null)
-                return BadRequest("User with this email already exists.");
+                return BadRequest(new { message = "User with this email already exists." });
 
-            var userDto = _mapper.Map<UserDto>(user);
-            return Ok(userDto);
+            return Ok(new { message = "User registered successfully." });
         }
 
         [HttpPost("login")]
@@ -91,6 +90,7 @@ namespace norviguet_control_fletes_api.Controllers
             return NoContent();
         }
 
+        // examples of protected endpoints
         [Authorize]
         [HttpGet]
         public IActionResult AuthenticatedOnlyEndpoint()

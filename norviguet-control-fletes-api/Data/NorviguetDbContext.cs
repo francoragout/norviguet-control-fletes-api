@@ -14,6 +14,8 @@ namespace norviguet_control_fletes_api.Data
         public DbSet<Carrier> Carriers { get; set; } = null!;
         public DbSet<Invoice> Invoices { get; set; } = null!;
         public DbSet<PaymentOrder> PaymentOrders { get; set; } = null!;
+        public DbSet<AccessConfiguration> AccessConfigurations { get; set; }
+        public DbSet<OrderStepConfiguration> OrderStepConfigurations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

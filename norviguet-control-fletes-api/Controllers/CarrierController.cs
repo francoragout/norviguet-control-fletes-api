@@ -21,6 +21,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpGet]
+        [AccessConfiguration("View")]
         public async Task<ActionResult<List<CarrierDto>>> GetCarriers()
         {
             var carriers = await _context.Carriers.ToListAsync();
@@ -29,6 +30,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpGet("{id}")]
+        [AccessConfiguration("View")]
         public async Task<ActionResult<CarrierDto>> GetCarrier(int id)
         {
             var carrier = await _context.Carriers.FindAsync(id);
@@ -39,6 +41,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpPost]
+        [AccessConfiguration("Create")]
         public async Task<ActionResult<CarrierDto>> CreateCarrier([FromBody] CreateCarrierDto dto)
         {
             var carrier = _mapper.Map<Carrier>(dto);
@@ -50,6 +53,7 @@ namespace norviguet_control_fletes_api.Controllers
 
 
         [HttpPut("{id}")]
+        [AccessConfiguration("Update")]
         public async Task<IActionResult> UpdateCarrier(int id, [FromBody] UpdateCarrierDto dto)
         {
             var carrier = await _context.Carriers.FindAsync(id);
@@ -61,6 +65,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [AccessConfiguration("Delete")]
         public async Task<IActionResult> DeleteCarrier(int id)
         {
             var carrier = await _context.Carriers.FindAsync(id);
