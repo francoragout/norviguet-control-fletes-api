@@ -21,7 +21,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<UserDto>> Register(RegisterDto request)
+        public async Task<ActionResult> Register(RegisterDto request)
         {
             var user = await _authService.RegisterAsync(request);
             if (user is null)
@@ -41,9 +41,9 @@ namespace norviguet_control_fletes_api.Controllers
             Response.Cookies.Append("refreshToken", result.RefreshToken, new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Expires = result.RefreshTokenExpiresAt
+                Secure = true, // false en localhost, true en producción HTTPS
+                SameSite = SameSiteMode.None, // obligatorio para cross-origin
+                Expires = request.RememberMe ? result.RefreshTokenExpiresAt : result.RefreshTokenExpiresAt
             });
 
             return Ok(result);
@@ -63,8 +63,8 @@ namespace norviguet_control_fletes_api.Controllers
             Response.Cookies.Append("refreshToken", result.RefreshToken, new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
+                Secure = true, // false en localhost, true en producción HTTPS
+                SameSite = SameSiteMode.None, // obligatorio para cross-origin
                 Expires = result.RefreshTokenExpiresAt
             });
 
@@ -84,25 +84,26 @@ namespace norviguet_control_fletes_api.Controllers
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                SameSite = SameSiteMode.None,
                 Expires = DateTimeOffset.UtcNow.AddDays(-1) // Expire immediately
             });
             return NoContent();
         }
 
-        // examples of protected endpoints
         [Authorize]
-        [HttpGet]
-        public IActionResult AuthenticatedOnlyEndpoint()
+        [HttpGet("me")]
+        public async Task<ActionResult<UserDto>> Me()
         {
-            return Ok("You are authenticated!");
-        }
+            var email = User.Identity?.Name;
+            if (string.IsNullOrEmpty(email))
+                return Unauthorized();
 
-        [Authorize(Roles = "Admin")]
-        [HttpGet("admin-only")]
-        public IActionResult AdminOnlyEndpoint()
-        {
-            return Ok("You are and admin!");
+            var user = await _authService.GetUserByEmailAsync(email);
+            if (user == null)
+                return NotFound();
+
+            var userDto = _mapper.Map<UserDto>(user);
+            return Ok(userDto);
         }
 
     }

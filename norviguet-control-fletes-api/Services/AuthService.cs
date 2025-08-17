@@ -26,10 +26,10 @@ namespace norviguet_control_fletes_api.Services
                 return null;
             }
 
-            return await CreateTokenResponse(user);
+            return await CreateTokenResponse(user, request.RememberMe);
         }
 
-        private async Task<TokenResponseDto> CreateTokenResponse(User user)
+        private async Task<TokenResponseDto> CreateTokenResponse(User user, bool rememberMe = false)
         {
             // Revocar todos los tokens activos previos
             var activeTokens = user.RefreshTokens.Where(rt => rt.IsActive).ToList();
@@ -40,7 +40,7 @@ namespace norviguet_control_fletes_api.Services
             await context.SaveChangesAsync();
 
             // Generar y guardar nuevo refresh token
-            var refreshToken = await GenerateAndSaveRefreshTokenAsync(user);
+            var refreshToken = await GenerateAndSaveRefreshTokenAsync(user, rememberMe);
             var refreshTokenEntity = await context.RefreshTokens.OrderByDescending(rt => rt.CreatedAt).FirstAsync(rt => rt.Token == refreshToken);
             return new TokenResponseDto
             {
@@ -93,14 +93,14 @@ namespace norviguet_control_fletes_api.Services
             return Convert.ToBase64String(randomNumber);
         }
 
-        private async Task<string> GenerateAndSaveRefreshTokenAsync(User user)
+        private async Task<string> GenerateAndSaveRefreshTokenAsync(User user, bool rememberMe = false)
         {
             var refreshToken = new RefreshToken
             {
                 Token = GenerateRefreshToken(),
                 UserId = user.Id,
                 CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddDays(7)
+                ExpiresAt = rememberMe ? DateTime.UtcNow.AddDays(30) : DateTime.UtcNow.AddDays(7)
             };
             context.RefreshTokens.Add(refreshToken);
             await context.SaveChangesAsync();
