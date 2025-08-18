@@ -38,12 +38,15 @@ namespace norviguet_control_fletes_api.Controllers
                 return BadRequest("Invalid username or password.");
 
             // Set refresh token as HTTP-only, Secure cookie
+            var expires = request.RememberMe
+                ? DateTimeOffset.UtcNow.AddDays(30)
+                : DateTimeOffset.UtcNow.AddDays(1);
             Response.Cookies.Append("refreshToken", result.RefreshToken, new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true, // false en localhost, true en producción HTTPS
                 SameSite = SameSiteMode.None, // obligatorio para cross-origin
-                Expires = request.RememberMe ? result.RefreshTokenExpiresAt : result.RefreshTokenExpiresAt
+                Expires = expires
             });
 
             return Ok(result);

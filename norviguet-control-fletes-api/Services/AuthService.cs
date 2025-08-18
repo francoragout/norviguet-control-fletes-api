@@ -15,11 +15,12 @@ namespace norviguet_control_fletes_api.Services
     {
         public async Task<TokenResponseDto?> LoginAsync(LoginDto request)
         {
-            var user = await context.Users.Include(u => u.RefreshTokens).FirstOrDefaultAsync(u => u.Email == request.Email);
-            if (user is null)
-            {
-                return null;
-            }
+            var user = await context.Users
+                .Include(u => u.RefreshTokens)
+                .FirstOrDefaultAsync(u => u.Email == request.Email);
+
+            if (user is null) return null;
+
             if (new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash, request.Password)
                 == PasswordVerificationResult.Failed)
             {
@@ -31,17 +32,23 @@ namespace norviguet_control_fletes_api.Services
 
         private async Task<TokenResponseDto> CreateTokenResponse(User user, bool rememberMe = false)
         {
-            // Revocar todos los tokens activos previos
-            var activeTokens = user.RefreshTokens.Where(rt => rt.IsActive).ToList();
+            // Revocar todos los tokens activos previos (filtrado en memoria)
+            var activeTokens = user.RefreshTokens
+                .ToList()
+                .Where(rt => rt.RevokedAt == null && rt.ExpiresAt > DateTime.UtcNow)
+                .ToList();
+
             foreach (var token in activeTokens)
-            {
                 token.RevokedAt = DateTime.UtcNow;
-            }
+
             await context.SaveChangesAsync();
 
             // Generar y guardar nuevo refresh token
             var refreshToken = await GenerateAndSaveRefreshTokenAsync(user, rememberMe);
-            var refreshTokenEntity = await context.RefreshTokens.OrderByDescending(rt => rt.CreatedAt).FirstAsync(rt => rt.Token == refreshToken);
+            var refreshTokenEntity = await context.RefreshTokens
+                .OrderByDescending(rt => rt.CreatedAt)
+                .FirstAsync(rt => rt.Token == refreshToken);
+
             return new TokenResponseDto
             {
                 AccessToken = CreateToken(user),
@@ -53,17 +60,14 @@ namespace norviguet_control_fletes_api.Services
         public async Task<User?> RegisterAsync(RegisterDto request)
         {
             if (await context.Users.AnyAsync(u => u.Email == request.Email))
-            {
                 return null;
-            }
 
-            var user = new User();
-            var hashedPassword = new PasswordHasher<User>()
-                .HashPassword(user, request.Password);
-
-            user.Name = request.Name;
-            user.Email = request.Email;
-            user.PasswordHash = hashedPassword;
+            var user = new User
+            {
+                Name = request.Name,
+                Email = request.Email,
+                PasswordHash = new PasswordHasher<User>().HashPassword(null!, request.Password)
+            };
 
             context.Users.Add(user);
             await context.SaveChangesAsync();
@@ -73,10 +77,13 @@ namespace norviguet_control_fletes_api.Services
 
         public async Task<TokenResponseDto?> RefreshTokensAsync(string refreshToken)
         {
-            var tokenEntity = await context.RefreshTokens.Include(rt => rt.User)
-                .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
-            if (tokenEntity == null || !tokenEntity.IsActive || tokenEntity.ExpiresAt < DateTime.UtcNow)
-                return null;
+            var tokenEntity = await context.RefreshTokens
+                .Include(rt => rt.User)
+                .FirstOrDefaultAsync(rt => rt.Token == refreshToken &&
+                                           rt.RevokedAt == null &&
+                                           rt.ExpiresAt > DateTime.UtcNow);
+
+            if (tokenEntity == null) return null;
 
             // Revocar el token actual
             tokenEntity.RevokedAt = DateTime.UtcNow;
@@ -102,8 +109,10 @@ namespace norviguet_control_fletes_api.Services
                 CreatedAt = DateTime.UtcNow,
                 ExpiresAt = rememberMe ? DateTime.UtcNow.AddDays(30) : DateTime.UtcNow.AddDays(7)
             };
+
             context.RefreshTokens.Add(refreshToken);
             await context.SaveChangesAsync();
+
             return refreshToken.Token;
         }
 
@@ -134,20 +143,28 @@ namespace norviguet_control_fletes_api.Services
 
         public async Task<User?> GetUserByEmailAsync(string email)
         {
-            return await context.Users.Include(u => u.RefreshTokens).FirstOrDefaultAsync(u => u.Email == email);
+            return await context.Users
+                .Include(u => u.RefreshTokens)
+                .FirstOrDefaultAsync(u => u.Email == email);
         }
 
         public async Task<User?> GetUserByRefreshTokenAsync(string refreshToken)
         {
-            var tokenEntity = await context.RefreshTokens.Include(rt => rt.User)
-                .FirstOrDefaultAsync(rt => rt.Token == refreshToken && rt.IsActive);
+            var tokenEntity = await context.RefreshTokens
+                .Include(rt => rt.User)
+                .FirstOrDefaultAsync(rt => rt.Token == refreshToken &&
+                                           rt.RevokedAt == null &&
+                                           rt.ExpiresAt > DateTime.UtcNow);
+
             return tokenEntity?.User;
         }
 
         public async Task InvalidateRefreshTokenAsync(string refreshToken)
         {
-            var tokenEntity = await context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == refreshToken && rt.IsActive);
-            if (tokenEntity != null)
+            var tokenEntity = await context.RefreshTokens
+                .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+
+            if (tokenEntity != null && tokenEntity.RevokedAt == null && tokenEntity.ExpiresAt > DateTime.UtcNow)
             {
                 tokenEntity.RevokedAt = DateTime.UtcNow;
                 await context.SaveChangesAsync();
@@ -157,7 +174,8 @@ namespace norviguet_control_fletes_api.Services
         public async Task<RefreshToken?> GetLatestActiveRefreshTokenAsync(User user)
         {
             var refreshToken = user.RefreshTokens
-                .Where(rt => rt.IsActive)
+                .ToList() // cargar en memoria
+                .Where(rt => rt.RevokedAt == null && rt.ExpiresAt > DateTime.UtcNow)
                 .OrderByDescending(rt => rt.CreatedAt)
                 .FirstOrDefault();
 
