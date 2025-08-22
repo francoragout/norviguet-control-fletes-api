@@ -2,7 +2,7 @@ namespace norviguet_control_fletes_api.Models.Order
 {
     public class UpdateOrderDto
     {
-        public string? DeliveryNote { get; set; }
+        public string Status { get; set; } = "Pending";
         public decimal? Price { get; set; }
         public float? DiscountRate { get; set; }
         public int? PurchaseOrder { get; set; }

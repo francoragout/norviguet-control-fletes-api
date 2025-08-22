@@ -9,7 +9,6 @@ namespace norviguet_control_fletes_api.Data
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
         public DbSet<Order> Orders { get; set; } = null!;
         public DbSet<Customer> Customers { get; set; } = null!;
-        public DbSet<Location> Locations { get; set; } = null!;
         public DbSet<Seller> Sellers { get; set; } = null!;
         public DbSet<Carrier> Carriers { get; set; } = null!;
         public DbSet<Invoice> Invoices { get; set; } = null!;
@@ -20,13 +19,8 @@ namespace norviguet_control_fletes_api.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Enum conversions
-
             modelBuilder.Entity<User>()
                 .Property(u => u.Role)
-                .HasConversion<string>();
-
-            modelBuilder.Entity<User>()
-                .Property(u => u.Status)
                 .HasConversion<string>();
 
             modelBuilder.Entity<Order>()
@@ -38,13 +32,11 @@ namespace norviguet_control_fletes_api.Data
                 .HasConversion<string>();
 
             // Precision settings
-
             modelBuilder.Entity<Order>()
                 .Property(o => o.Price)
                 .HasPrecision(18, 2);
 
             // Relationships
-
             modelBuilder.Entity<User>()
                 .HasMany(u => u.RefreshTokens)
                 .WithOne(rt => rt.User)
@@ -81,13 +73,12 @@ namespace norviguet_control_fletes_api.Data
                 .HasForeignKey(o => o.PaymentOrderId)
                 .OnDelete(DeleteBehavior.SetNull);
 
+            // Unique constraints
+            modelBuilder.Entity<Seller>()
+                .HasIndex(s => s.Name)
+                .IsUnique();
 
             base.OnModelCreating(modelBuilder);
-        }
-
-        internal object Map<T>(List<Carrier> carriers)
-        {
-            throw new NotImplementedException();
         }
     }
 }

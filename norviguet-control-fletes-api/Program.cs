@@ -6,6 +6,7 @@ using norviguet_control_fletes_api.Data;
 using norviguet_control_fletes_api.Services;
 using Scalar.AspNetCore;
 using System.Text;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +15,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
     });
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -50,7 +52,8 @@ builder.Services.AddCors(options =>
         policy => policy
             .WithOrigins(
                 "http://localhost:5173",
-                "https://localhost:7117"
+                "https://localhost:7117",
+                "https://norviguet-control-fletes.netlify.app"
             )
             .AllowAnyHeader()
             .AllowAnyMethod()

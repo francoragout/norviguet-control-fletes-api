@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using norviguet_control_fletes_api.Data;
 
@@ -11,9 +12,11 @@ using norviguet_control_fletes_api.Data;
 namespace norviguet_control_fletes_api.Migrations
 {
     [DbContext(typeof(NorviguetDbContext))]
-    partial class NorviguetDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250822182453_DeleteLocation")]
+    partial class DeleteLocation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

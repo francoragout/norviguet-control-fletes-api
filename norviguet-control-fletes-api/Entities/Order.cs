@@ -10,7 +10,6 @@
     {
         public int Id { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
         public string DeliveryNote { get; set; } = string.Empty;
         public decimal Price { get; set; }
@@ -28,5 +27,11 @@
         public Invoice? Invoice { get; set; }
         public int? PaymentOrderId { get; set; }
         public PaymentOrder? PaymentOrder { get; set; }
+
+        // Method to generate DeliveryNote
+        public void GenerateDeliveryNote(int seriesNumber, int sequentialNumber)
+        {
+            DeliveryNote = $"{seriesNumber:D5}-{sequentialNumber:D8}";
+        }
     }
 }

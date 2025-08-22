@@ -6,6 +6,9 @@ namespace norviguet_control_fletes_api.Models.Customer
     {
         [Required]
         [StringLength(50, ErrorMessage = "The name must be between 1 and 50 characters long.")]
-        public string name { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        [Required]
+        [StringLength(50, ErrorMessage = "The location must be between 1 and 50 characters long.")]
+        public string Location { get; set; } = string.Empty;
     }
 }
