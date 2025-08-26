@@ -10,7 +10,7 @@ namespace norviguet_control_fletes_api.Models.Order
         public OrderStatus Status { get; set; }
         public string? DeliveryNote { get; set; }
         public int? CarrierId { get; set; }
-        public CarrierDto? Carrier { get; set; }
+        public CarrierDto? CarrierName { get; set; }
         public int SellerId { get; set; }
         public int CustomerId { get; set; }
         public decimal Price { get; set; }

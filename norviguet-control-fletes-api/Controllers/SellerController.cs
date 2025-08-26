@@ -69,5 +69,18 @@ namespace norviguet_control_fletes_api.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
+
+        [HttpDelete("bulk")]
+        public async Task<IActionResult> DeleteSellers([FromBody] DeleteSellersDto dto)
+        {
+            var sellersToDelete = await _context.Sellers
+                .Where(s => dto.Ids.Contains(s.Id))
+                .ToListAsync();
+            if (sellersToDelete.Count == 0)
+                return NotFound();
+            _context.Sellers.RemoveRange(sellersToDelete);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
     }
 }

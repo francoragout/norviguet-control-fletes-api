@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
 using norviguet_control_fletes_api.Entities;
 using norviguet_control_fletes_api.Models.Carrier;
+using norviguet_control_fletes_api.Models.Customer;
+using norviguet_control_fletes_api.Models.Seller;
 
 namespace norviguet_control_fletes_api.Controllers
 {
@@ -72,6 +74,17 @@ namespace norviguet_control_fletes_api.Controllers
             if (carrier == null)
                 return NotFound();
             _context.Carriers.Remove(carrier);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        [HttpDelete("bulk")]
+        public async Task<IActionResult> DeleteCarriersBulk([FromBody] DeleteCarriersDto dto)
+        {
+            var carriers = await _context.Carriers.Where(c => dto.Ids.Contains(c.Id)).ToListAsync();
+            if (carriers.Count == 0)
+                return NotFound();
+            _context.Carriers.RemoveRange(carriers);
             await _context.SaveChangesAsync();
             return NoContent();
         }
