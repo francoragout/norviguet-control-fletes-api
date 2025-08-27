@@ -46,9 +46,6 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<ActionResult<OrderDto>> CreateOrder([FromBody] CreateOrderDto dto)
         {
             var order = _mapper.Map<Entities.Order>(dto);
-            // Generar DeliveryNote antes de guardar
-            // Ejemplo: puedes usar el Id del seller como seriesNumber y el Id del customer como sequentialNumber, o cualquier lógica que prefieras
-            order.GenerateDeliveryNote(order.SellerId, order.CustomerId);
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
             var resultDto = _mapper.Map<OrderDto>(order);

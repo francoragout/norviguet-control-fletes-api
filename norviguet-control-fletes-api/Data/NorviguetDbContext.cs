@@ -12,7 +12,7 @@ namespace norviguet_control_fletes_api.Data
         public DbSet<Seller> Sellers { get; set; } = null!;
         public DbSet<Carrier> Carriers { get; set; } = null!;
         public DbSet<Invoice> Invoices { get; set; } = null!;
-        public DbSet<PaymentOrder> PaymentOrders { get; set; } = null!;
+        public DbSet<Payment> Payments { get; set; } = null!;
         public DbSet<AccessConfiguration> AccessConfigurations { get; set; }
         public DbSet<OrderStepConfiguration> OrderStepConfigurations { get; set; }
 
@@ -68,9 +68,9 @@ namespace norviguet_control_fletes_api.Data
                 .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<Order>()
-                .HasOne(o => o.PaymentOrder)
+                .HasOne(o => o.Payment)
                 .WithMany(p => p.Orders)
-                .HasForeignKey(o => o.PaymentOrderId)
+                .HasForeignKey(o => o.PaymentId)
                 .OnDelete(DeleteBehavior.SetNull);
 
             // Unique constraints

@@ -14,7 +14,6 @@
         public string DeliveryNote { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public float DiscountRate { get; set; }
-        public int PurchaseOrder { get; set; }
 
         // Relaciones
         public int? CarrierId { get; set; }
@@ -25,13 +24,7 @@
         public Customer Customer { get; set; } = null!;
         public int? InvoiceId { get; set; }
         public Invoice? Invoice { get; set; }
-        public int? PaymentOrderId { get; set; }
-        public PaymentOrder? PaymentOrder { get; set; }
-
-        // Method to generate DeliveryNote
-        public void GenerateDeliveryNote(int seriesNumber, int sequentialNumber)
-        {
-            DeliveryNote = $"{seriesNumber:D5}-{sequentialNumber:D8}";
-        }
+        public int? PaymentId { get; set; }
+        public Payment? Payment { get; set; }
     }
 }

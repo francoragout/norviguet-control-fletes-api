@@ -1,9 +1,15 @@
+using norviguet_control_fletes_api.Entities;
+using System.ComponentModel.DataAnnotations;
+
 namespace norviguet_control_fletes_api.Models.Invoice
 {
     public class CreateInvoiceDto
     {
-        public string Type { get; set; } = string.Empty;
+        [Required]
+        public InvoiceType Type { get; set; }
+        [Required]
         public int PointOfSale { get; set; }
+        [Required]
         public int Number { get; set; }
     }
 }
