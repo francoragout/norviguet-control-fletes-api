@@ -6,10 +6,10 @@ namespace norviguet_control_fletes_api.Models.Order
     {
         public int Id { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
         public OrderStatus Status { get; set; }
         public string? DeliveryNote { get; set; }
         public string? CarrierId { get; set; }
-        public string? CarrierName { get; set; }
         public int SellerId { get; set; }
         public int CustomerId { get; set; }
         public decimal Price { get; set; }

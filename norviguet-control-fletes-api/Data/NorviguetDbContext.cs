@@ -31,9 +31,21 @@ namespace norviguet_control_fletes_api.Data
                 .Property(i => i.Type)
                 .HasConversion<string>();
 
+            modelBuilder.Entity<Invoice>()
+                .Property(i => i.POS)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Payment>()
+                .Property(p => p.POS)
+                .HasConversion<string>();
+
             // Precision settings
             modelBuilder.Entity<Order>()
                 .Property(o => o.Price)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<Order>()
+                .Property(o => o.DiscountRate)
                 .HasPrecision(18, 2);
 
             // Relationships
@@ -72,11 +84,6 @@ namespace norviguet_control_fletes_api.Data
                 .WithMany(p => p.Orders)
                 .HasForeignKey(o => o.PaymentId)
                 .OnDelete(DeleteBehavior.SetNull);
-
-            // Unique constraints
-            modelBuilder.Entity<Seller>()
-                .HasIndex(s => s.Name)
-                .IsUnique();
 
             base.OnModelCreating(modelBuilder);
         }

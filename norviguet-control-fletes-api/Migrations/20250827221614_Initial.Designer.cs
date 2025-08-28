@@ -12,8 +12,8 @@ using norviguet_control_fletes_api.Data;
 namespace norviguet_control_fletes_api.Migrations
 {
     [DbContext(typeof(NorviguetDbContext))]
-    [Migration("20250827015852_DeletePurchaseOrder")]
-    partial class DeletePurchaseOrder
+    [Migration("20250827221614_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -154,6 +154,9 @@ namespace norviguet_control_fletes_api.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 

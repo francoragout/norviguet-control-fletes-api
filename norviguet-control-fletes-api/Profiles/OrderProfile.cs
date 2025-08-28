@@ -9,9 +9,7 @@ namespace norviguet_control_fletes_api.Profiles
     {
         public OrderProfile()
         {
-            CreateMap<Order, OrderDto>()
-                .ForMember(dest => dest.CarrierName, opt => opt.MapFrom(src => src.Carrier != null ? src.Carrier.Name : null));
-
+            CreateMap<Order, OrderDto>();
             CreateMap<CreateOrderDto, Order>();
         }
     }

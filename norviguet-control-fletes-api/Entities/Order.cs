@@ -10,10 +10,11 @@
     {
         public int Id { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
         public string DeliveryNote { get; set; } = string.Empty;
         public decimal Price { get; set; }
-        public float DiscountRate { get; set; }
+        public decimal DiscountRate { get; set; }
 
         // Relaciones
         public int? CarrierId { get; set; }
