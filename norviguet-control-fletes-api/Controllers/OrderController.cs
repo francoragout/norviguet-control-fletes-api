@@ -25,6 +25,8 @@ namespace norviguet_control_fletes_api.Controllers
         {
             var orders = await _context.Orders
                 .Include(o => o.Carrier) // Incluir Carrier en la consulta
+                .Include(o => o.Customer) // Incluir Customer en la consulta
+                .Include(o => o.Seller) // Incluir Seller en la consulta
                 .ToListAsync();
             var result = _mapper.Map<List<OrderDto>>(orders);
             return Ok(result);

@@ -71,9 +71,10 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete("bulk")]
-        public async Task<IActionResult> DeleteInvoices([FromBody] List<int> ids)
+        public async Task<IActionResult> DeleteInvoicesBulk([FromBody] DeleteInvoicesDto dto)
         {
-            var invoices = await _context.Invoices.Where(i => ids.Contains(i.Id)).ToListAsync();
+            // Cambia dto.Ids por dto.InvoiceIds, que es del tipo List<int>
+            var invoices = await _context.Invoices.Where(i => dto.Ids.Contains(i.Id)).ToListAsync();
             if (invoices.Count == 0)
                 return NotFound();
             _context.Invoices.RemoveRange(invoices);

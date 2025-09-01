@@ -12,8 +12,8 @@ using norviguet_control_fletes_api.Data;
 namespace norviguet_control_fletes_api.Migrations
 {
     [DbContext(typeof(NorviguetDbContext))]
-    [Migration("20250828024112_AddPOSEnums")]
-    partial class AddPOSEnums
+    [Migration("20250828224207_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -102,7 +102,7 @@ namespace norviguet_control_fletes_api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("POS")
+                    b.Property<string>("PointOfSale")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -213,7 +213,7 @@ namespace norviguet_control_fletes_api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("POS")
+                    b.Property<string>("PointOfSale")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

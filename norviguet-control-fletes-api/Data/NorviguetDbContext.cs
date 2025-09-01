@@ -31,14 +31,6 @@ namespace norviguet_control_fletes_api.Data
                 .Property(i => i.Type)
                 .HasConversion<string>();
 
-            modelBuilder.Entity<Invoice>()
-                .Property(i => i.POS)
-                .HasConversion<string>();
-
-            modelBuilder.Entity<Payment>()
-                .Property(p => p.POS)
-                .HasConversion<string>();
-
             // Precision settings
             modelBuilder.Entity<Order>()
                 .Property(o => o.Price)
