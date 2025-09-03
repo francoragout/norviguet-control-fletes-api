@@ -60,9 +60,8 @@ namespace norviguet_control_fletes_api.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Type = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PointOfSale = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    PointOfSale = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -91,8 +90,7 @@ namespace norviguet_control_fletes_api.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    PointOfSale = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    PointOfSale = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {

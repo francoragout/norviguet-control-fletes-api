@@ -25,9 +25,15 @@ namespace norviguet_control_fletes_api.Controllers
         {
             var user = await _authService.RegisterAsync(request);
             if (user is null)
-                return BadRequest(new { message = "User with this email already exists." });
+                return BadRequest(new {
+                    code = "USER_EXISTS",
+                    message = "A user with this email already exists."
+                });
 
-            return Ok(new { message = "User registered successfully." });
+            return Ok(new {
+                code = "USER_CREATED",
+                message = "User created successfully and is pending approval."
+            });
         }
 
         [HttpPost("login")]
@@ -35,7 +41,20 @@ namespace norviguet_control_fletes_api.Controllers
         {
             var result = await _authService.LoginAsync(request);
             if (result is null)
-                return BadRequest("Invalid username or password.");
+                return Unauthorized(new
+                {
+                    code = "INVALID_CREDENTIALS",
+                    message = "Invalid credentials."
+                });
+
+            // Verificar si el usuario tiene el rol 'Pending'
+            var user = await _authService.GetUserByEmailAsync(request.Email);
+            if (user != null && user.Role.ToString() == "Pending")
+                return StatusCode(403, new
+                {
+                    code = "USER_PENDING",
+                    message = "User is pending approval."
+                });
 
             // Set refresh token as HTTP-only, Secure cookie
             var expires = request.RememberMe

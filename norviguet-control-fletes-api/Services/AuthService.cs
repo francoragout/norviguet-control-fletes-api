@@ -123,7 +123,7 @@ namespace norviguet_control_fletes_api.Services
                 new Claim("email", user.Email),
                 new Claim("id", user.Id.ToString()),
                 new Claim("role", user.Role.ToString()),
-                //new Claim("name", user.Name)
+                new Claim("name", user.Name)
             };
 
             var key = new SymmetricSecurityKey(
