@@ -111,22 +111,5 @@ namespace norviguet_control_fletes_api.Controllers
             });
             return NoContent();
         }
-
-        [Authorize]
-        [HttpGet("me")]
-        public async Task<ActionResult<UserDto>> Me()
-        {
-            var email = User.Identity?.Name;
-            if (string.IsNullOrEmpty(email))
-                return Unauthorized();
-
-            var user = await _authService.GetUserByEmailAsync(email);
-            if (user == null)
-                return NotFound();
-
-            var userDto = _mapper.Map<UserDto>(user);
-            return Ok(userDto);
-        }
-
     }
 }

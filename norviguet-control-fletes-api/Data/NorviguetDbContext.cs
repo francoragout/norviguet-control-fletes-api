@@ -14,7 +14,6 @@ namespace norviguet_control_fletes_api.Data
         public DbSet<Invoice> Invoices { get; set; } = null!;
         public DbSet<Payment> Payments { get; set; } = null!;
         public DbSet<AccessConfiguration> AccessConfigurations { get; set; }
-        public DbSet<OrderStepConfiguration> OrderStepConfigurations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -57,13 +56,13 @@ namespace norviguet_control_fletes_api.Data
                 .HasOne(o => o.Seller)
                 .WithMany(s => s.Orders)
                 .HasForeignKey(o => o.SellerId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.Customer)
                 .WithMany(c => c.Orders)
                 .HasForeignKey(o => o.CustomerId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.Invoice)

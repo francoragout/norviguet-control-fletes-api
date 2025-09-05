@@ -10,7 +10,6 @@ namespace norviguet_control_fletes_api.Profiles
         {
             CreateMap<User, UserDto>();
             CreateMap<UpdateUserDto, User>();
-            CreateMap<UpdateProfileDto, User>();
         }
     }
 }

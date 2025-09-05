@@ -19,6 +19,7 @@ namespace norviguet_control_fletes_api.Controllers
             _mapper = mapper;
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<ActionResult<List<UserDto>>> GetUsers()
         {
@@ -34,6 +35,19 @@ namespace norviguet_control_fletes_api.Controllers
             var user = await _context.Users.FindAsync(id);
             if (user == null)
                 return NotFound();
+
+            // Validación: no cambiar el rol del único admin
+            var isAdmin = user.Role == Entities.UserRole.Admin;
+            var totalAdmins = await _context.Users.CountAsync(u => u.Role == Entities.UserRole.Admin);
+            var newRole = dto.Role;
+            if (isAdmin && totalAdmins == 1 && !string.Equals(newRole, "Admin", StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest(new
+                {
+                    code = "CANNOT_EDIT_LAST_ADMIN_ROLE",
+                    message = "Cannot change the role of the only admin user."
+                });
+            }
 
             // Guarda los valores originales
             var originalRole = user.Role.ToString();
@@ -54,6 +68,49 @@ namespace norviguet_control_fletes_api.Controllers
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
             return NoContent();
+        }
+
+        [HttpDelete("bulk")]
+        public async Task<IActionResult> DeleteUsers([FromBody] DeleteUsersDto dto)
+        {
+            var users = await _context.Users.Where(u => dto.Ids.Contains(u.Id)).ToListAsync();
+            if (users.Count == 0)
+                return NotFound();
+
+            // Validación: no eliminar todos los admins
+            var adminIdsToDelete = users.Where(u => u.Role == Entities.UserRole.Admin).Select(u => u.Id).ToList();
+            var totalAdmins = await _context.Users.CountAsync(u => u.Role == Entities.UserRole.Admin);
+            if (adminIdsToDelete.Count > 0 && totalAdmins - adminIdsToDelete.Count < 1)
+            {
+                return BadRequest(new
+                {
+                    code = "CANNOT_DELETE_ALL_ADMINS",
+                    message = "At least one admin user must remain in the system."
+                });
+            }
+
+            _context.Users.RemoveRange(users);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<ActionResult<UserDto>> GetMe()
+        {
+            // Obtener el id del usuario autenticado desde los claims
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "id");
+            if (userIdClaim == null)
+                return Unauthorized();
+            if (!int.TryParse(userIdClaim.Value, out var userId))
+                return Unauthorized();
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return NotFound();
+
+            var result = _mapper.Map<UserDto>(user);
+            return Ok(result);
         }
     }
 }
