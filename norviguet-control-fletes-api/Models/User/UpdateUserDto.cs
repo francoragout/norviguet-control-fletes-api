@@ -1,4 +1,6 @@
-﻿namespace norviguet_control_fletes_api.Models.User
+﻿using norviguet_control_fletes_api.Entities;
+
+namespace norviguet_control_fletes_api.Models.User
 {
     public class UpdateUserDto
     {

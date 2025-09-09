@@ -9,7 +9,13 @@ namespace norviguet_control_fletes_api.Profiles
         public UserProfile()
         {
             CreateMap<User, UserDto>();
-            CreateMap<UpdateUserDto, User>();
+            CreateMap<UpdateUserDto, User>()
+                .ForMember(dest => dest.Role, opt => opt.MapFrom(src => ParseUserRole(src.Role)));
+        }
+
+        private static UserRole ParseUserRole(string? role)
+        {
+            return Enum.TryParse<UserRole>(role, true, out var parsed) ? parsed : UserRole.Pending;
         }
     }
 }

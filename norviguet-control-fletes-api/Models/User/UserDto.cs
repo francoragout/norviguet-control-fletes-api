@@ -1,4 +1,6 @@
-﻿namespace norviguet_control_fletes_api.Models.User
+﻿using norviguet_control_fletes_api.Entities;
+
+namespace norviguet_control_fletes_api.Models.User
 {
     public class UserDto
     {
@@ -6,6 +8,6 @@
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string Name { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
-        public string Role { get; set; } = "Pending"; 
+        public UserRole Role { get; set; } = UserRole.Pending;
     }
 }

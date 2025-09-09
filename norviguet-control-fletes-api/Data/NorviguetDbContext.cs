@@ -13,8 +13,7 @@ namespace norviguet_control_fletes_api.Data
         public DbSet<Carrier> Carriers { get; set; } = null!;
         public DbSet<Invoice> Invoices { get; set; } = null!;
         public DbSet<Payment> Payments { get; set; } = null!;
-        public DbSet<AccessConfiguration> AccessConfigurations { get; set; }
-
+        public DbSet<Permission> Permissions { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Enum conversions
@@ -44,6 +43,12 @@ namespace norviguet_control_fletes_api.Data
                 .HasMany(u => u.RefreshTokens)
                 .WithOne(rt => rt.User)
                 .HasForeignKey(rt => rt.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Permissions)
+                .WithOne(p => p.User)
+                .HasForeignKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Order>()

@@ -19,7 +19,9 @@
         public UserRole Role { get; set; } = UserRole.Pending;
         public byte[]? Image { get; set; }
 
-        // Relacion uno a muchos con RefreshToken
+        // Relacion uno a muchos
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+        public ICollection<Permission> Permissions { get; set; } = new List<Permission>();
+
     }
 }

@@ -39,8 +39,13 @@ namespace norviguet_control_fletes_api.Controllers
             // Validación: no cambiar el rol del único admin
             var isAdmin = user.Role == Entities.UserRole.Admin;
             var totalAdmins = await _context.Users.CountAsync(u => u.Role == Entities.UserRole.Admin);
-            var newRole = dto.Role;
-            if (isAdmin && totalAdmins == 1 && !string.Equals(newRole, "Admin", StringComparison.OrdinalIgnoreCase))
+
+            // Convierte el string a enum para la comparación
+            Entities.UserRole parsedRole;
+            if (!Enum.TryParse(dto.Role, true, out parsedRole))
+                parsedRole = Entities.UserRole.Pending;
+
+            if (isAdmin && totalAdmins == 1 && parsedRole != Entities.UserRole.Admin)
             {
                 return BadRequest(new
                 {
@@ -49,12 +54,10 @@ namespace norviguet_control_fletes_api.Controllers
                 });
             }
 
-            // Guarda los valores originales
-            var originalRole = user.Role.ToString();
-
-            // Aplica los cambios
+            // Aplica los cambios (el mapeo también usará la conversión robusta definida en tu UserProfile)
             _mapper.Map(dto, user);
 
+            await _context.SaveChangesAsync();
             return NoContent();
         }
 

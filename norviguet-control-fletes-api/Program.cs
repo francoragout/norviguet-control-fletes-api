@@ -43,7 +43,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IAccessConfigurationService, AccessConfigurationService>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 

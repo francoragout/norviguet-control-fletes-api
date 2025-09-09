@@ -61,7 +61,6 @@ namespace norviguet_control_fletes_api.Controllers
             if (order == null)
                 return NotFound();
             _mapper.Map(dto, order);
-            _context.Orders.Update(order);
             await _context.SaveChangesAsync();
             return NoContent();
         }
