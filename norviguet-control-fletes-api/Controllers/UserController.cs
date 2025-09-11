@@ -9,6 +9,8 @@ namespace norviguet_control_fletes_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+    [PermissionAuthorize]
     public class UserController : ControllerBase
     {
         private readonly NorviguetDbContext _context;
@@ -19,7 +21,6 @@ namespace norviguet_control_fletes_api.Controllers
             _mapper = mapper;
         }
 
-        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<ActionResult<List<UserDto>>> GetUsers()
         {
@@ -28,7 +29,6 @@ namespace norviguet_control_fletes_api.Controllers
             return Ok(result);
         }
 
-        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<ActionResult<UserDto>> UpdateUser(int id, [FromBody] UpdateUserDto dto)
         {
@@ -61,7 +61,6 @@ namespace norviguet_control_fletes_api.Controllers
             return NoContent();
         }
 
-        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {

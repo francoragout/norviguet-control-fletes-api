@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
@@ -10,6 +11,8 @@ namespace norviguet_control_fletes_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+    [PermissionAuthorize]
     public class PermissionController : ControllerBase
     {
         private readonly NorviguetDbContext _context;
@@ -24,7 +27,9 @@ namespace norviguet_control_fletes_api.Controllers
         [HttpGet]
         public async Task<ActionResult<List<string>>> GetPermissions()
         {
-            var permissions = await _context.Permissions.ToListAsync();
+            var permissions = await _context.Permissions
+                .Include(p => p.User) // Incluir User en la consulta
+                .ToListAsync();
             var result = _mapper.Map<List<PermissionDto>>(permissions);
             return Ok(result);
         }

@@ -1,16 +1,17 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
 using norviguet_control_fletes_api.Entities;
 using norviguet_control_fletes_api.Models.Carrier;
-using norviguet_control_fletes_api.Models.Customer;
-using norviguet_control_fletes_api.Models.Seller;
 
 namespace norviguet_control_fletes_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+    [PermissionAuthorize]
     public class CarrierController : ControllerBase
     {
         private readonly NorviguetDbContext _context;

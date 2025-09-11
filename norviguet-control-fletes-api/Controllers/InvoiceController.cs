@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
@@ -9,6 +9,8 @@ namespace norviguet_control_fletes_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+    [PermissionAuthorize]
     public class InvoiceController : ControllerBase
     {
         private readonly NorviguetDbContext _context;

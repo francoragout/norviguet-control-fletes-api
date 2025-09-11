@@ -8,7 +8,10 @@ namespace norviguet_control_fletes_api.Profiles
     {
         public PermissionProfile()
         {
-            CreateMap<Permission, PermissionDto>();
+            CreateMap<Permission, PermissionDto>()
+                .ForMember(dest => dest.UserName,
+                    opt => opt.MapFrom(src => src.User.Name));
+
             CreateMap<CreatePermissionDto, Permission>();
             CreateMap<UpdatePermissionDto, Permission>();
         }

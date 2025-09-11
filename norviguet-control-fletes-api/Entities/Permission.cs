@@ -5,7 +5,7 @@
         public int Id { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string Route { get; set; } = string.Empty;
-        public List<string> AllowedMethods { get; set; } = new List<string>();
+        public string Method { get; set; } = string.Empty;
 
         // Relación con User
         public int UserId { get; set; }
