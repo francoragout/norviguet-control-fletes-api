@@ -24,7 +24,7 @@ builder.Services.AddControllers()
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<NorviguetDbContext>(options =>
-       options.UseSqlServer(builder.Configuration.GetConnectionString("NorviguetDatabase")));
+       options.UseSqlServer(builder.Configuration.GetConnectionString("NorviguetDB")));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -53,7 +53,7 @@ builder.Services.AddCors(options =>
             .WithOrigins(
                 "http://localhost:5173",
                 "https://localhost:7117",
-                "https://norviguet-control-fletes.netlify.app"
+                "https://thankful-ocean-0a8a9e40f.1.azurestaticapps.net"
             )
             .AllowAnyHeader()
             .AllowAnyMethod()

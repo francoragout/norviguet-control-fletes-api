@@ -4,6 +4,5 @@
     {
         public int Id { get; set; }
         public int PointOfSale { get; set; }
-        public int OrderNumber { get; set; }
     }
 }
