@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using norviguet_control_fletes_api.Data;
@@ -60,9 +61,22 @@ builder.Services.AddCors(options =>
             .AllowCredentials()); // Permite el envío de cookies
 });
 
-var app = builder.Build();
+// Prueba de conexión a la base de datos
+try
+{
+    using (var connection = new SqlConnection(builder.Configuration.GetConnectionString("norviguetDB")))
+    {
+        connection.Open();
+        Console.WriteLine("Conexión exitosa a la base de datos.");
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Error al conectar a la base de datos: {ex.Message}");
+}
 
 // Configure the HTTP request pipeline.
+var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using norviguet_control_fletes_api.Data;
 
@@ -11,9 +12,11 @@ using norviguet_control_fletes_api.Data;
 namespace norviguet_control_fletes_api.Migrations
 {
     [DbContext(typeof(NorviguetDbContext))]
-    partial class NorviguetDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250915122339_addFirstMigrationToAzureSQLDB")]
+    partial class addFirstMigrationToAzureSQLDB
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -78,42 +81,6 @@ namespace norviguet_control_fletes_api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Invoices");
-                });
-
-            modelBuilder.Entity("norviguet_control_fletes_api.Entities.Notification", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Link")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("norviguet_control_fletes_api.Entities.Order", b =>
@@ -309,17 +276,6 @@ namespace norviguet_control_fletes_api.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("norviguet_control_fletes_api.Entities.Notification", b =>
-                {
-                    b.HasOne("norviguet_control_fletes_api.Entities.User", "User")
-                        .WithMany("Notifications")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("norviguet_control_fletes_api.Entities.Order", b =>
                 {
                     b.HasOne("norviguet_control_fletes_api.Entities.Carrier", "Carrier")
@@ -407,8 +363,6 @@ namespace norviguet_control_fletes_api.Migrations
 
             modelBuilder.Entity("norviguet_control_fletes_api.Entities.User", b =>
                 {
-                    b.Navigation("Notifications");
-
                     b.Navigation("Permissions");
 
                     b.Navigation("RefreshTokens");

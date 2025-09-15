@@ -1,9 +1,13 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Models.Auth;
 using norviguet_control_fletes_api.Models.User;
 using norviguet_control_fletes_api.Services;
+using norviguet_control_fletes_api.Models.Notification;
+using norviguet_control_fletes_api.Data;
+using norviguet_control_fletes_api.Entities;
 
 namespace norviguet_control_fletes_api.Controllers
 {
@@ -13,11 +17,19 @@ namespace norviguet_control_fletes_api.Controllers
     {
         private readonly IAuthService _authService;
         private readonly IMapper _mapper;
+        private readonly NorviguetDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public AuthController(IAuthService authService, IMapper mapper)
+        public AuthController(
+            IAuthService authService,
+            IMapper mapper,
+            NorviguetDbContext context,
+            INotificationService notificationService)
         {
             _authService = authService;
             _mapper = mapper;
+            _context = context;
+            _notificationService = notificationService;
         }
 
         [HttpPost("register")]
@@ -29,6 +41,23 @@ namespace norviguet_control_fletes_api.Controllers
                     code = "USER_EXISTS",
                     message = "A user with this email already exists."
                 });
+
+            // Notificar a los administradores
+            var adminUsers = await _context.Users
+                .Where(u => u.Role == UserRole.Admin)
+                .ToListAsync();
+
+            foreach (var admin in adminUsers)
+            {
+                var notificationDto = new CreateNotificationDto
+                {
+                    UserId = admin.Id,
+                    Title = "Nuevo usuario registrado",
+                    Message = $"El usuario {user.Name} ({user.Email}) se ha registrado y está pendiente de aprobación.",
+                    Link = "/dashboard/users"
+                };
+                await _notificationService.CreateNotificationAsync(notificationDto);
+            }
 
             return Ok(new {
                 code = "USER_CREATED",

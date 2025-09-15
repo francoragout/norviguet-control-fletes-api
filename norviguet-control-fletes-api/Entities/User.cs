@@ -22,6 +22,6 @@
         // Relacion uno a muchos
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
         public ICollection<Permission> Permissions { get; set; } = new List<Permission>();
-
+        public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     }
 }
