@@ -9,8 +9,9 @@ namespace norviguet_control_fletes_api.Profiles
         public UserProfile()
         {
             CreateMap<User, UserDto>();
-            CreateMap<UpdateUserDto, User>()
+            CreateMap<UpdateUserRoleDto, User>()
                 .ForMember(dest => dest.Role, opt => opt.MapFrom(src => ParseUserRole(src.Role)));
+            CreateMap<UpdateUserAccountDto, User>();
         }
 
         private static UserRole ParseUserRole(string? role)

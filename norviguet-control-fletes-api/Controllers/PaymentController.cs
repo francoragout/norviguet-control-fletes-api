@@ -19,7 +19,9 @@ namespace norviguet_control_fletes_api.Controllers
         [HttpGet]
         public async Task<ActionResult<List<PaymentDto>>> GetPayments()
         {
-            var payments = await _context.Payments.ToListAsync();
+            var payments = await _context.Payments
+                .Include(p => p.Orders)
+                .ToListAsync();
             var result = _mapper.Map<List<PaymentDto>>(payments);
             return Ok(result);
         }

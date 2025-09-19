@@ -1,9 +1,10 @@
-﻿using norviguet_control_fletes_api.Entities;
+using norviguet_control_fletes_api.Entities;
 
 namespace norviguet_control_fletes_api.Models.User
 {
-    public class UpdateUserDto
+    public class UpdateUserRoleDto
     {
         public string Role { get; set; } = "Pending";
+
     }
 }

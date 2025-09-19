@@ -9,8 +9,7 @@ namespace norviguet_control_fletes_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
-    [PermissionAuthorize]
+    [Authorize (Roles = "Admin")]
     public class UserController : ControllerBase
     {
         private readonly NorviguetDbContext _context;
@@ -29,8 +28,8 @@ namespace norviguet_control_fletes_api.Controllers
             return Ok(result);
         }
 
-        [HttpPut("{id}")]
-        public async Task<ActionResult<UserDto>> UpdateUser(int id, [FromBody] UpdateUserDto dto)
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> UpdateUserRole(int id, [FromBody] UpdateUserRoleDto dto)
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null)
@@ -94,25 +93,6 @@ namespace norviguet_control_fletes_api.Controllers
             _context.Users.RemoveRange(users);
             await _context.SaveChangesAsync();
             return NoContent();
-        }
-
-        [Authorize]
-        [HttpGet("me")]
-        public async Task<ActionResult<UserDto>> GetMe()
-        {
-            // Obtener el id del usuario autenticado desde los claims
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "id");
-            if (userIdClaim == null)
-                return Unauthorized();
-            if (!int.TryParse(userIdClaim.Value, out var userId))
-                return Unauthorized();
-
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null)
-                return NotFound();
-
-            var result = _mapper.Map<UserDto>(user);
-            return Ok(result);
         }
     }
 }

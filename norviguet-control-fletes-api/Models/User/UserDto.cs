@@ -9,5 +9,6 @@ namespace norviguet_control_fletes_api.Models.User
         public string Name { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public UserRole Role { get; set; } = UserRole.Pending;
+        public string? ImageUrl { get; set; }
     }
 }

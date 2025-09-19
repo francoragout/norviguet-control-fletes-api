@@ -4,5 +4,6 @@
     {
         public int Id { get; set; }
         public int PointOfSale { get; set; }
+        public List<int> OrderIds { get; set; } = new();
     }
 }

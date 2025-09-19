@@ -17,7 +17,7 @@
         public string Email { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty;
         public UserRole Role { get; set; } = UserRole.Pending;
-        public byte[]? Image { get; set; }
+        public string? ImageUrl { get; set; }
 
         // Relacion uno a muchos
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();

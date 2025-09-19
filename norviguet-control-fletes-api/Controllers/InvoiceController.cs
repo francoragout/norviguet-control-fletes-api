@@ -9,8 +9,8 @@ namespace norviguet_control_fletes_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
-    [PermissionAuthorize]
+    //[Authorize]
+    //[PermissionAuthorize]
     public class InvoiceController : ControllerBase
     {
         private readonly NorviguetDbContext _context;
@@ -25,7 +25,9 @@ namespace norviguet_control_fletes_api.Controllers
         [HttpGet]
         public async Task<ActionResult<List<InvoiceDto>>> GetInvoices()
         {
-            var invoices = await _context.Invoices.ToListAsync();
+            var invoices = await _context.Invoices
+                .Include(i => i.Orders)
+                .ToListAsync();
             var result = _mapper.Map<List<InvoiceDto>>(invoices);
             return Ok(result);
         }

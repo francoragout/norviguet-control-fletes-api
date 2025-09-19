@@ -27,8 +27,21 @@ namespace norviguet_control_fletes_api.Controllers
         [HttpGet("user/{userId}")]
         public async Task<ActionResult<List<NotificationDto>>> GetNotificationsByUser(int userId)
         {
+            var cutoffDate = DateTime.UtcNow.AddDays(-30);
+
+            // Eliminar notificaciones viejas antes de consultar
+            var oldNotifications = await _context.Notifications
+                .Where(n => n.UserId == userId && n.CreatedAt < cutoffDate)
+                .ToListAsync();
+
+            if (oldNotifications.Any())
+            {
+                _context.Notifications.RemoveRange(oldNotifications);
+                await _context.SaveChangesAsync();
+            }
+
             var notifications = await _context.Notifications
-                .Where(n => n.UserId == userId)
+                .Where(n => n.UserId == userId && n.CreatedAt >= cutoffDate)
                 .OrderByDescending(n => n.CreatedAt)
                 .ToListAsync();
 
@@ -63,23 +76,6 @@ namespace norviguet_control_fletes_api.Controllers
             var notification = await _notificationService.CreateNotificationAsync(dto);
             var resultDto = _mapper.Map<NotificationDto>(notification);
             return CreatedAtAction(nameof(GetNotificationsByUser), new { userId = notification.UserId }, resultDto);
-        }
-
-        // 4. Eliminar notificaciones de más de 30 días
-        [HttpDelete("delete-old")]
-        public async Task<IActionResult> DeleteOldNotifications()
-        {
-            var cutoffDate = DateTime.UtcNow.AddDays(-30);
-            var oldNotifications = await _context.Notifications
-                .Where(n => n.CreatedAt < cutoffDate)
-                .ToListAsync();
-
-            if (!oldNotifications.Any())
-                return NotFound("No hay notificaciones antiguas para eliminar.");
-
-            _context.Notifications.RemoveRange(oldNotifications);
-            await _context.SaveChangesAsync();
-            return NoContent();
         }
     }
 }
