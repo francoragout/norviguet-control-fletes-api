@@ -182,5 +182,17 @@ namespace norviguet_control_fletes_api.Services
 
             return await Task.FromResult(refreshToken);
         }
+
+        public bool VerifyPassword(string password, string passwordHash)
+        {
+            // Puedes reutilizar PasswordHasher de Microsoft.AspNetCore.Identity
+            var result = new PasswordHasher<User>().VerifyHashedPassword(null!, passwordHash, password);
+            return result == PasswordVerificationResult.Success;
+        }
+
+        public string HashPassword(string password)
+        {
+            return new PasswordHasher<User>().HashPassword(null!, password);
+        }
     }
 }

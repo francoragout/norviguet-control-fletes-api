@@ -12,5 +12,8 @@ namespace norviguet_control_fletes_api.Services
         Task<User?> GetUserByRefreshTokenAsync(string refreshToken);
         Task InvalidateRefreshTokenAsync(string refreshToken);
         Task<RefreshToken?> GetLatestActiveRefreshTokenAsync(User user);
+        bool VerifyPassword(string password, string passwordHash);
+        string HashPassword(string password);
+
     }
 }
