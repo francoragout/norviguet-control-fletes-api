@@ -9,7 +9,6 @@ namespace norviguet_control_fletes_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize (Roles = "Admin")]
     public class UserController : ControllerBase
     {
         private readonly NorviguetDbContext _context;
@@ -24,14 +23,29 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<List<UserDto>>> GetUsers()
         {
             var users = await _context.Users.ToListAsync();
             var result = _mapper.Map<List<UserDto>>(users);
+
+            foreach (var user in result)
+            {
+                if (!string.IsNullOrEmpty(user.ImageUrl))
+                {
+                    var fileName = Uri.IsWellFormedUriString(user.ImageUrl, UriKind.Absolute)
+                        ? Path.GetFileName(new Uri(user.ImageUrl).LocalPath)
+                        : user.ImageUrl;
+
+                    user.ImageUrl = _blobStorageService.GetBlobSasUrl(fileName);
+                }
+            }
+
             return Ok(result);
         }
 
         [HttpPatch("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateUserRole(int id, [FromBody] UpdateUserRoleDto dto)
         {
             var user = await _context.Users.FindAsync(id);
@@ -63,18 +77,20 @@ namespace norviguet_control_fletes_api.Controllers
             return NoContent();
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(int id)
-        {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
-                return NotFound();
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
-            return NoContent();
-        }
+        //[HttpDelete("{id}")]
+        //[Authorize(Roles = "Admin")]
+        //public async Task<IActionResult> DeleteUser(int id)
+        //{
+        //    var user = await _context.Users.FindAsync(id);
+        //    if (user == null)
+        //        return NotFound();
+        //    _context.Users.Remove(user);
+        //    await _context.SaveChangesAsync();
+        //    return NoContent();
+        //}
 
         [HttpDelete("bulk")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteUsers([FromBody] DeleteUsersDto dto)
         {
             var users = await _context.Users.Where(u => dto.Ids.Contains(u.Id)).ToListAsync();

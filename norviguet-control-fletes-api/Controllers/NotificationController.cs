@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
@@ -50,9 +51,16 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         // 2. Marcar todas las notificaciones del usuario como leídas
-        [HttpPatch("mark-all-as-read/{userId}")]
-        public async Task<IActionResult> MarkAllAsRead(int userId)
+        [Authorize]
+        [HttpPatch("mark-all-as-read")]
+        public async Task<IActionResult> MarkAllAsRead()
         {
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "id");
+            if (userIdClaim == null)
+                return Unauthorized();
+
+            int userId = int.Parse(userIdClaim.Value);
+
             var notifications = await _context.Notifications
                 .Where(n => n.UserId == userId && !n.IsRead)
                 .ToListAsync();

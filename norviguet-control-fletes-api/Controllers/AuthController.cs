@@ -53,7 +53,7 @@ namespace norviguet_control_fletes_api.Controllers
                 {
                     UserId = admin.Id,
                     Title = "Nuevo usuario registrado",
-                    Message = $"El usuario {user.Name} ({user.Email}) se ha registrado y está pendiente de aprobación.",
+                    Message = $"El usuario {user.Name} se ha registrado y está pendiente de aprobación.",
                     Link = "/dashboard/users"
                 };
                 await _notificationService.CreateNotificationAsync(notificationDto);

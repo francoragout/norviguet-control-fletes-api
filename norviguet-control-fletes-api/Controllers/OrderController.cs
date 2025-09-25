@@ -4,22 +4,30 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
 using norviguet_control_fletes_api.Models.Order;
+using norviguet_control_fletes_api.Models.Notification; // Asegúrate de tener este using
+using norviguet_control_fletes_api.Entities;
+using norviguet_control_fletes_api.Services; // Para UserRole
 
 namespace norviguet_control_fletes_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
-    //[PermissionAuthorize]
+    [Authorize]
+    [PermissionAuthorize]
     public class OrderController : ControllerBase
     {
         private readonly NorviguetDbContext _context;
         private readonly IMapper _mapper;
+        private readonly INotificationService _notificationService;
 
-        public OrderController(NorviguetDbContext context, IMapper mapper)
+        public OrderController(
+            NorviguetDbContext context,
+            IMapper mapper,
+            INotificationService notificationService)
         {
             _context = context;
             _mapper = mapper;
+            _notificationService = notificationService;
         }
 
         [HttpGet]
@@ -52,6 +60,24 @@ namespace norviguet_control_fletes_api.Controllers
             var order = _mapper.Map<Entities.Order>(dto);
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
+
+            // Notificar a todos los usuarios cuyo rol no sea Pending
+            var usersToNotify = await _context.Users
+                .Where(u => u.Role != UserRole.Pending)
+                .ToListAsync();
+
+            foreach (var user in usersToNotify)
+            {
+                var notificationDto = new CreateNotificationDto
+                {
+                    UserId = user.Id,
+                    Title = "Nuevo pedido creado",
+                    Message = $"Se ha creado un nuevo pedido (ID: {order.Id}).",
+                    Link = $"/dashboard/orders/{order.Id}/update"
+                };
+                await _notificationService.CreateNotificationAsync(notificationDto);
+            }
+
             var resultDto = _mapper.Map<OrderDto>(order);
             return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, resultDto);
         }
@@ -78,4 +104,4 @@ namespace norviguet_control_fletes_api.Controllers
             return NoContent();
         }
     }
-}   
+}
