@@ -10,7 +10,7 @@ namespace norviguet_control_fletes_api.Data
         public DbSet<Order> Orders { get; set; } = null!;
         public DbSet<Customer> Customers { get; set; } = null!;
         public DbSet<Seller> Sellers { get; set; } = null!;
-        public DbSet<Carrier> Carriers { get; set; } = null!;
+        public virtual DbSet<Carrier> Carriers { get; set; } = null!;
         public DbSet<Invoice> Invoices { get; set; } = null!;
         public DbSet<Payment> Payments { get; set; } = null!;
         public DbSet<Permission> Permissions { get; set; } = null!;

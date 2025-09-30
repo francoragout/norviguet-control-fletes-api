@@ -9,8 +9,8 @@ namespace norviguet_control_fletes_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
-    //[PermissionAuthorize]
+    [Authorize]
+    [PermissionAuthorize]
     public class InvoiceController : ControllerBase
     {
         private readonly NorviguetDbContext _context;
