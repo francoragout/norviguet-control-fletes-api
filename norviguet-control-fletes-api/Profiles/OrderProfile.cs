@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using norviguet_control_fletes_api.Entities;
 using norviguet_control_fletes_api.Models.Order;
-using norviguet_control_fletes_api.Models.Carrier;
 
 namespace norviguet_control_fletes_api.Profiles
 {
@@ -15,6 +14,13 @@ namespace norviguet_control_fletes_api.Profiles
                 .ForMember(dest => dest.SellerName, opt => opt.MapFrom(src => src.Seller != null ? src.Seller.Name : null));
             CreateMap<CreateOrderDto, Order>();
             CreateMap<UpdateOrderDto, Order>();
+            CreateMap<UpdateOrderStatusDto, Order>()
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => ParseOrderStatus(src.Status)));
+        }
+
+        private static OrderStatus ParseOrderStatus(string? status)
+        {
+            return Enum.TryParse<OrderStatus>(status, true, out var parsed) ? parsed : OrderStatus.Pending;
         }
     }
 }

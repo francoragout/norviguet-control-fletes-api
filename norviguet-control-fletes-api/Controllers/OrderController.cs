@@ -4,16 +4,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
 using norviguet_control_fletes_api.Models.Order;
-using norviguet_control_fletes_api.Models.Notification; // Asegúrate de tener este using
+using norviguet_control_fletes_api.Models.Notification;
 using norviguet_control_fletes_api.Entities;
-using norviguet_control_fletes_api.Services; // Para UserRole
+using norviguet_control_fletes_api.Services;
 
 namespace norviguet_control_fletes_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    [PermissionAuthorize]
     public class OrderController : ControllerBase
     {
         private readonly NorviguetDbContext _context;
@@ -94,6 +93,21 @@ namespace norviguet_control_fletes_api.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
+
+        [HttpPatch("{id}/status")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] UpdateOrderStatusDto dto)
+        {
+            var order = await _context.Orders.FindAsync(id);
+            if (order == null)
+                return NotFound();
+
+            _mapper.Map(dto, order); // Usa el mapeo que convierte string a enum
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteOrder(int id)
