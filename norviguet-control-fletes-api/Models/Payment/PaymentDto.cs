@@ -3,7 +3,8 @@
     public class PaymentDto
     {
         public int Id { get; set; }
-        public int PointOfSale { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public string PointOfSale { get; set; } = string.Empty;
         public List<int> OrderIds { get; set; } = new();
     }
 }

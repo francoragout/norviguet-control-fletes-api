@@ -15,6 +15,7 @@ namespace norviguet_control_fletes_api.Models.Auth
         [Required]
         [MinLength(8, ErrorMessage = "Password must be at least 8 characters long.")]
         [MaxLength(30, ErrorMessage = "Password cannot exceed 30 characters.")]
+        [RegularExpression(@"^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':""\\|,.<>\/?]).+$", ErrorMessage = "Password must contain at least one uppercase letter, one number, and one special character.")]
         public string Password { get; set; } = string.Empty;
         [Compare("Password", ErrorMessage = "Passwords do not match.")]
         public string ConfirmPassword { get; set; } = string.Empty;

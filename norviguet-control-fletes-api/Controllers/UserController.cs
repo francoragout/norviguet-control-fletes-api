@@ -77,17 +77,30 @@ namespace norviguet_control_fletes_api.Controllers
             return NoContent();
         }
 
-        //[HttpDelete("{id}")]
-        //[Authorize(Roles = "Admin")]
-        //public async Task<IActionResult> DeleteUser(int id)
-        //{
-        //    var user = await _context.Users.FindAsync(id);
-        //    if (user == null)
-        //        return NotFound();
-        //    _context.Users.Remove(user);
-        //    await _context.SaveChangesAsync();
-        //    return NoContent();
-        //}
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+                return NotFound();
+
+            // Validación: no eliminar el único admin
+            var isAdmin = user.Role == Entities.UserRole.Admin;
+            var totalAdmins = await _context.Users.CountAsync(u => u.Role == Entities.UserRole.Admin);
+            if (isAdmin && totalAdmins == 1)
+            {
+                return BadRequest(new
+                {
+                    code = "CANNOT_DELETE_ALL_ADMINS",
+                    message = "At least one admin user must remain in the system."
+                });
+            }
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
 
         [HttpDelete("bulk")]
         [Authorize(Roles = "Admin")]

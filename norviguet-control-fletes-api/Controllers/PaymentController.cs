@@ -68,9 +68,9 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete("bulk")]
-        public async Task<IActionResult> DeletePayments([FromBody] DeletePaymentsDto ids)
+        public async Task<IActionResult> DeletePaymentsBulk([FromBody] DeletePaymentsDto dto)
         {
-            var payments = await _context.Payments.Where(p => ids.PaymentIds.Contains(p.Id)).ToListAsync();
+            var payments = await _context.Payments.Where(p => dto.Ids.Contains(p.Id)).ToListAsync();
             if (payments.Count == 0)
                 return NotFound();
             _context.Payments.RemoveRange(payments);

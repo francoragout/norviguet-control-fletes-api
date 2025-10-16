@@ -58,6 +58,32 @@ namespace norviguet_control_fletes_api.Controllers
         [HttpPost]
         public async Task<ActionResult<OrderDto>> CreateOrder([FromBody] CreateOrderDto dto)
         {
+            // Validar existencia de PaymentId e InvoiceId si se especifican
+            if (dto.PaymentId.HasValue)
+            {
+                var paymentExists = await _context.Payments.AnyAsync(p => p.Id == dto.PaymentId.Value);
+                if (!paymentExists)
+                {
+                    return BadRequest(new
+                    {
+                        code = "INVALID_PAYMENT_ID",
+                        message = $"The PaymentId {dto.PaymentId.Value} does not exist."
+                    });
+                }
+            }
+            if (dto.InvoiceId.HasValue)
+            {
+                var invoiceExists = await _context.Invoices.AnyAsync(i => i.Id == dto.InvoiceId.Value);
+                if (!invoiceExists)
+                {
+                    return BadRequest(new
+                    {
+                        code = "INVALID_INVOICE_ID",
+                        message = $"The InvoiceId {dto.InvoiceId.Value} does not exist."
+                    });
+                }
+            }
+
             var order = _mapper.Map<Entities.Order>(dto);
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
@@ -89,6 +115,33 @@ namespace norviguet_control_fletes_api.Controllers
             var order = await _context.Orders.FindAsync(id);
             if (order == null)
                 return NotFound();
+
+            // Validar existencia de PaymentId e InvoiceId si se especifican
+            if (dto.PaymentId.HasValue)
+            {
+                var paymentExists = await _context.Payments.AnyAsync(p => p.Id == dto.PaymentId.Value);
+                if (!paymentExists)
+                {
+                    return BadRequest(new
+                    {
+                        code = "INVALID_PAYMENT_ID",
+                        message = $"The PaymentId {dto.PaymentId.Value} does not exist."
+                    });
+                }
+            }
+            if (dto.InvoiceId.HasValue)
+            {
+                var invoiceExists = await _context.Invoices.AnyAsync(i => i.Id == dto.InvoiceId.Value);
+                if (!invoiceExists)
+                {
+                    return BadRequest(new
+                    {
+                        code = "INVALID_INVOICE_ID",
+                        message = $"The InvoiceId {dto.InvoiceId.Value} does not exist."
+                    });
+                }
+            }
+
             _mapper.Map(dto, order);
             await _context.SaveChangesAsync();
             return NoContent();

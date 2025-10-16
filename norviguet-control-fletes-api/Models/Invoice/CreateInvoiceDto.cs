@@ -5,11 +5,10 @@ namespace norviguet_control_fletes_api.Models.Invoice
 {
     public class CreateInvoiceDto
     {
-        //[Required]
-        //public DateTime CreatedAt { get; set; }
         [Required]
         public InvoiceType Type { get; set; }
         [Required]
-        public int PointOfSale { get; set; }
+        [StringLength(50, ErrorMessage = "The PointOfSale must be between 1 and 50 characters long.")]
+        public string PointOfSale { get; set; } = string.Empty;
     }
 }

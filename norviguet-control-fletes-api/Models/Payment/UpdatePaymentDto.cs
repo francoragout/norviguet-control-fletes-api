@@ -1,7 +1,11 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace norviguet_control_fletes_api.Models.Payment
 {
     public class UpdatePaymentDto
     {
-        public int PointOfSale { get; set; }
+        [Required]
+        [StringLength(50, ErrorMessage = "The PointOfSale must be between 1 and 50 characters long.")]
+        public string PointOfSale { get; set; } = string.Empty;
     }
 }
