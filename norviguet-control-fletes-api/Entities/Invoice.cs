@@ -14,6 +14,7 @@
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public InvoiceType Type { get; set; }
         public string PointOfSale { get; set; } = string.Empty;
+        public string Number { get; set; } = string.Empty;
 
         // Relación uno a muchos con Order
         public ICollection<Order> Orders { get; set; } = new List<Order>();

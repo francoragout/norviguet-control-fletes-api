@@ -8,7 +8,10 @@ namespace norviguet_control_fletes_api.Models.Invoice
         [Required]
         public InvoiceType Type { get; set; }
         [Required]
-        [StringLength(50, ErrorMessage = "The PointOfSale must be between 1 and 50 characters long.")]
+        [StringLength(4, MinimumLength = 4, ErrorMessage = "PointOfSale must be exactly 4 digits.")]
         public string PointOfSale { get; set; } = string.Empty;
+        [Required]
+        [StringLength(8, MinimumLength = 8, ErrorMessage = "Number must be exactly 8 digits.")]
+        public string Number { get; set; } = string.Empty;
     }
 }
