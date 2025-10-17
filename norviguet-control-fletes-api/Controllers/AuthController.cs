@@ -140,32 +140,5 @@ namespace norviguet_control_fletes_api.Controllers
             });
             return NoContent();
         }
-
-        [Authorize]
-        [HttpPost("change-password")]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
-        {
-            // Obtener el ID del usuario autenticado
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "id");
-            if (userIdClaim == null)
-                return Unauthorized();
-
-            int userId = int.Parse(userIdClaim.Value);
-
-            // Buscar el usuario en la base de datos
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null)
-                return NotFound(new { code = "USER_NOT_FOUND", message = "Usuario no encontrado." });
-
-            // Verificar la contraseña actual
-            if (!_authService.VerifyPassword(dto.CurrentPassword, user.PasswordHash))
-                return BadRequest(new { code = "INVALID_PASSWORD", message = "La contraseña actual es incorrecta." });
-
-            // Actualizar la contraseña
-            user.PasswordHash = _authService.HashPassword(dto.NewPassword);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { code = "PASSWORD_CHANGED", message = "Contraseña actualizada correctamente." });
-        }
     }
 }

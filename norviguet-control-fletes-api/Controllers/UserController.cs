@@ -9,6 +9,7 @@ namespace norviguet_control_fletes_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class UserController : ControllerBase
     {
         private readonly NorviguetDbContext _context;
@@ -23,7 +24,6 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<List<UserDto>>> GetUsers()
         {
             var users = await _context.Users.ToListAsync();
@@ -45,7 +45,6 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpPatch("{id}")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateUserRole(int id, [FromBody] UpdateUserRoleDto dto)
         {
             var user = await _context.Users.FindAsync(id);
@@ -78,7 +77,6 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
@@ -103,7 +101,6 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete("bulk")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteUsers([FromBody] DeleteUsersDto dto)
         {
             var users = await _context.Users.Where(u => dto.Ids.Contains(u.Id)).ToListAsync();
@@ -125,83 +122,6 @@ namespace norviguet_control_fletes_api.Controllers
             _context.Users.RemoveRange(users);
             await _context.SaveChangesAsync();
             return NoContent();
-        }
-
-        [HttpGet("me")]
-        [Authorize]
-        public async Task<ActionResult<UserDto>> GetMe()
-        {
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "id");
-            if (userIdClaim == null)
-                return Unauthorized();
-            if (!int.TryParse(userIdClaim.Value, out var userId))
-                return Unauthorized();
-
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null)
-                return NotFound();
-
-            var result = _mapper.Map<UserDto>(user);
-            if (!string.IsNullOrEmpty(user.ImageUrl))
-            {
-                var fileName = Uri.IsWellFormedUriString(user.ImageUrl, UriKind.Absolute)
-                    ? Path.GetFileName(new Uri(user.ImageUrl).LocalPath)
-                    : user.ImageUrl;
-
-                result.ImageUrl = _blobStorageService.GetBlobSasUrl(fileName);
-            }
-
-            return Ok(result);
-        }
-
-        [HttpPatch]
-        [Authorize]
-        public async Task<IActionResult> UpdateAccount([FromForm] UpdateUserAccountDto updateUserDto, [FromForm] IFormFile? file)
-        {
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "id");
-            if (userIdClaim == null)
-                return Unauthorized();
-            if (!int.TryParse(userIdClaim.Value, out var userId))
-                return Unauthorized();
-
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null)
-                return NotFound();
-
-            _mapper.Map(updateUserDto, user);
-
-            if (file != null)
-            {
-                if (file.Length == 0)
-                    return BadRequest("No se recibió ningún archivo.");
-
-                var fileName = $"user_{userId}_{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-                try
-                {
-                    using var stream = file.OpenReadStream();
-                    var imageUrl = await _blobStorageService.UploadAsync(fileName, stream, file.ContentType);
-
-                    if (string.IsNullOrEmpty(imageUrl))
-                        return StatusCode(500, "No se pudo subir la imagen al almacenamiento.");
-
-                    if (!string.IsNullOrEmpty(user.ImageUrl))
-                    {
-                        var oldFileName = Uri.IsWellFormedUriString(user.ImageUrl, UriKind.Absolute)
-                            ? Path.GetFileName(new Uri(user.ImageUrl).LocalPath)
-                            : user.ImageUrl;
-                        await _blobStorageService.DeleteAsync(oldFileName);
-                    }
-
-                    user.ImageUrl = imageUrl;
-                }
-                catch (Exception ex)
-                {
-                    return StatusCode(500, $"Error al subir la imagen: {ex.Message}");
-                }
-            }
-
-            await _context.SaveChangesAsync();
-            return Ok(_mapper.Map<UserDto>(user));
         }
     }
 }
