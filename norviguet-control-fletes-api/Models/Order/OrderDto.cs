@@ -15,6 +15,7 @@ namespace norviguet_control_fletes_api.Models.Order
         public string? SellerName { get; set; }
         public int? CustomerId { get; set; }
         public string? CustomerName { get; set; }
+        public string? CustomerLocation { get; set; }
         public decimal? Price { get; set; }
         public int? PaymentId { get; set; }
         public int? InvoiceId { get; set; }

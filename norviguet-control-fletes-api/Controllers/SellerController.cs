@@ -40,13 +40,12 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<SellerDto>> CreateSeller([FromBody] CreateSellerDto dto)
+        public async Task<IActionResult> CreateSeller([FromBody] CreateSellerDto dto)
         {
             var seller = _mapper.Map<Entities.Seller>(dto);
             _context.Sellers.Add(seller);
             await _context.SaveChangesAsync();
-            var resultDto = _mapper.Map<SellerDto>(seller);
-            return CreatedAtAction(nameof(GetSeller), new { id = seller.Id }, resultDto);
+            return Ok();
         }
 
         [HttpPut("{id}")]

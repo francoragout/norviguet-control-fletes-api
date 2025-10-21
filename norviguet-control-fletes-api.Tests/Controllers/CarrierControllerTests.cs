@@ -75,7 +75,7 @@ public class CarrierControllerTests
     }
 
     [Fact]
-    public async Task CreateCarrier_ReturnsCreatedCarrierDto()
+    public async Task CreateCarrier_ReturnsOk()
     {
         var context = GetDbContext("CreateCarrierDb");
         var controller = new CarrierController(context, GetMapper());
@@ -83,10 +83,7 @@ public class CarrierControllerTests
 
         var result = await controller.CreateCarrier(dto);
 
-        var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
-        var carrierDto = Assert.IsType<CarrierDto>(createdResult.Value);
-        Assert.Equal("New Carrier", carrierDto.Name);
-        Assert.True(carrierDto.Id > 0);
+        Assert.IsType<OkResult>(result);
     }
 
     [Fact]
@@ -103,6 +100,7 @@ public class CarrierControllerTests
 
         Assert.IsType<NoContentResult>(result);
         var updatedCarrier = await context.Carriers.FindAsync(1);
+        Assert.NotNull(updatedCarrier);
         Assert.Equal("Updated Name", updatedCarrier.Name);
     }
 

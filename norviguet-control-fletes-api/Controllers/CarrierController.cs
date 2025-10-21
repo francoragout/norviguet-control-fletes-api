@@ -41,13 +41,12 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<CarrierDto>> CreateCarrier([FromBody] CreateCarrierDto dto)
+        public async Task<IActionResult> CreateCarrier([FromBody] CreateCarrierDto dto)
         {
             var carrier = _mapper.Map<Carrier>(dto);
             _context.Carriers.Add(carrier);
             await _context.SaveChangesAsync();
-            var resultDto = _mapper.Map<CarrierDto>(carrier);
-            return CreatedAtAction(nameof(GetCarrier), new { id = carrier.Id }, resultDto);
+            return Ok();
         }
 
 

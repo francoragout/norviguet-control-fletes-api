@@ -41,13 +41,12 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<CustomerDto>> CreateCustomer([FromBody] CreateCustomerDto dto)
+        public async Task<IActionResult> CreateCustomer([FromBody] CreateCustomerDto dto)
         {
             var customer = _mapper.Map<Customer>(dto);
             _context.Customers.Add(customer);
             await _context.SaveChangesAsync();
-            var resultDto = _mapper.Map<CustomerDto>(customer);
-            return CreatedAtAction(nameof(GetCustomer), new { id = customer.Id }, resultDto);
+            return Ok();
         }
 
         [HttpPut("{id}")]

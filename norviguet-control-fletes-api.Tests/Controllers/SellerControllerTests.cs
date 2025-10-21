@@ -81,7 +81,7 @@ public class SellerControllerTests
     }
 
     [Fact]
-    public async Task CreateSeller_ReturnsCreatedSellerDto()
+    public async Task CreateSeller_ReturnsOk()
     {
         var context = GetDbContext("CreateSellerDb");
         var controller = new SellerController(context, GetMapper());
@@ -89,10 +89,7 @@ public class SellerControllerTests
 
         var result = await controller.CreateSeller(dto);
 
-        var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
-        var sellerDto = Assert.IsType<SellerDto>(createdResult.Value);
-        Assert.Equal("New Seller", sellerDto.Name);
-        Assert.True(sellerDto.Id > 0);
+        Assert.IsType<OkResult>(result);
     }
 
     [Fact]
@@ -109,6 +106,7 @@ public class SellerControllerTests
 
         Assert.IsType<NoContentResult>(result);
         var updatedSeller = await context.Sellers.FindAsync(1);
+        Assert.NotNull(updatedSeller);
         Assert.Equal("Updated Name", updatedSeller.Name);
     }
 
