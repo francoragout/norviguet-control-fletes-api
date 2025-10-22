@@ -99,7 +99,6 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpPatch("image")]
-        [Authorize]
         public async Task<IActionResult> UpdateAccountImage([FromForm] IFormFile? file)
         {
             var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "id");
@@ -143,7 +142,6 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete("image")]
-        [Authorize]
         public async Task<IActionResult> DeleteAccountImage()
         {
             var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "id");
@@ -170,7 +168,6 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete]
-        [Authorize]
         public async Task<IActionResult> DeleteAccount()
         {
             var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "id");

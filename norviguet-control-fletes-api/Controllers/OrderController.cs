@@ -56,6 +56,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin, Logistics")]
         public async Task<ActionResult<OrderDto>> CreateOrder([FromBody] CreateOrderDto dto)
         {
             // Validar existencia de PaymentId e InvoiceId si se especifican
@@ -98,7 +99,7 @@ namespace norviguet_control_fletes_api.Controllers
                 var notificationDto = new CreateNotificationDto
                 {
                     UserId = user.Id,
-                    Title = "Nuevo pedido creado",
+                    Title = "Nuevo Pedido",
                     Message = $"Se ha creado un nuevo pedido (ID: {order.Id}).",
                     Link = $"/dashboard/orders/{order.Id}/update"
                 };
@@ -163,6 +164,7 @@ namespace norviguet_control_fletes_api.Controllers
 
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteOrder(int id)
         {
             var order = await _context.Orders.FindAsync(id);
@@ -174,6 +176,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete("bulk")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteOrdersBulk([FromBody] DeleteOrdersDto dto)
         {
             var orders = await _context.Orders
@@ -185,6 +188,5 @@ namespace norviguet_control_fletes_api.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
-        
     }
 }

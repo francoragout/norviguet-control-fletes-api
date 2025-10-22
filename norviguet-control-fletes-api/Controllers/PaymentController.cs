@@ -25,27 +25,18 @@ namespace norviguet_control_fletes_api.Controllers
             return Ok(result);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<PaymentDto>> GetPayment(int id)
-        {
-            var payment = await _context.Payments.FindAsync(id);
-            if (payment == null)
-                return NotFound();
-            var result = _mapper.Map<PaymentDto>(payment);
-            return Ok(result);
-        }
-
         [HttpPost]
-        public async Task<ActionResult<PaymentDto>> CreatePayment([FromBody] CreatePaymentDto dto)
+        [Authorize(Roles = "Admin, Payments")]
+        public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentDto dto)
         {
             var payment = _mapper.Map<Entities.Payment>(dto);
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
-            var resultDto = _mapper.Map<PaymentDto>(payment);
-            return CreatedAtAction(nameof(GetPayment), new { id = payment.Id }, resultDto);
+            return NoContent(); 
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin, Payments")]
         public async Task<IActionResult> UpdatePayment(int id, [FromBody] UpdatePaymentDto dto)
         {
             var existingPayment = await _context.Payments.FindAsync(id);
@@ -57,6 +48,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin, Payments")]
         public async Task<IActionResult> DeletePayment(int id)
         {
             var existingPayment = await _context.Payments.FindAsync(id);
@@ -68,6 +60,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete("bulk")]
+        [Authorize(Roles = "Admin, Payments")]
         public async Task<IActionResult> DeletePaymentsBulk([FromBody] DeletePaymentsDto dto)
         {
             var payments = await _context.Payments.Where(p => dto.Ids.Contains(p.Id)).ToListAsync();

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
+using norviguet_control_fletes_api.Entities;
 using norviguet_control_fletes_api.Models.Invoice;
 
 namespace norviguet_control_fletes_api.Controllers
@@ -31,27 +32,18 @@ namespace norviguet_control_fletes_api.Controllers
             return Ok(result);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<InvoiceDto>> GetInvoice(int id)
-        {
-            var invoice = await _context.Invoices.FindAsync(id);
-            if (invoice == null)
-                return NotFound();
-            var result = _mapper.Map<InvoiceDto>(invoice);
-            return Ok(result);
-        }
-
         [HttpPost]
-        public async Task<ActionResult<InvoiceDto>> CreateInvoice([FromBody] CreateInvoiceDto dto)
+        [Authorize(Roles = "Admin, Purchasing")]
+        public async Task<IActionResult> CreateInvoice([FromBody] CreateInvoiceDto dto)
         {
-            var invoice = _mapper.Map<Entities.Invoice>(dto);
+            var invoice = _mapper.Map<Invoice>(dto);
             _context.Invoices.Add(invoice);
             await _context.SaveChangesAsync();
-            var resultDto = _mapper.Map<InvoiceDto>(invoice);
-            return CreatedAtAction(nameof(GetInvoice), new { id = invoice.Id }, resultDto);
+            return NoContent();
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin, Purchasing")]
         public async Task<IActionResult> UpdateInvoice(int id, [FromBody] UpdateInvoiceDto dto)
         {
             var existingInvoice = await _context.Invoices.FindAsync(id);
@@ -63,6 +55,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin, Purchasing")]
         public async Task<IActionResult> DeleteInvoice(int id)
         {
             var existingInvoice = await _context.Invoices.FindAsync(id);
@@ -74,6 +67,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete("bulk")]
+        [Authorize(Roles = "Admin, Purchasing")]
         public async Task<IActionResult> DeleteInvoicesBulk([FromBody] DeleteInvoicesDto dto)
         {
             var invoices = await _context.Invoices.Where(i => dto.Ids.Contains(i.Id)).ToListAsync();

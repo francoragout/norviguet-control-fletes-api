@@ -24,10 +24,15 @@ namespace norviguet_control_fletes_api.Controllers
             _notificationService = notificationService;
         }
 
-        // 1. Obtener notificaciones por usuario
-        [HttpGet("user/{userId}")]
-        public async Task<ActionResult<List<NotificationDto>>> GetNotificationsByUser(int userId)
+        [Authorize]
+        [HttpGet]
+        public async Task<ActionResult<List<NotificationDto>>> GetNotifications()
         {
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "id");
+            if (userIdClaim == null)
+                return Unauthorized();
+
+            int userId = int.Parse(userIdClaim.Value);
             var cutoffDate = DateTime.UtcNow.AddDays(-30);
 
             // Eliminar notificaciones viejas antes de consultar
@@ -50,10 +55,17 @@ namespace norviguet_control_fletes_api.Controllers
             return Ok(result);
         }
 
-        // 2. Marcar todas las notificaciones del usuario como leídas
+        [HttpPost]
+        public async Task<ActionResult<NotificationDto>> CreateNotification([FromBody] CreateNotificationDto dto)
+        {
+            var notification = await _notificationService.CreateNotificationAsync(dto);
+            var resultDto = _mapper.Map<NotificationDto>(notification);
+            return CreatedAtAction(nameof(GetNotifications), new { userId = notification.UserId }, resultDto);
+        }
+
         [Authorize]
-        [HttpPatch("mark-all-as-read")]
-        public async Task<IActionResult> MarkAllAsRead()
+        [HttpPatch("is-read")]
+        public async Task<IActionResult> UpdateNotifications()
         {
             var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "id");
             if (userIdClaim == null)
@@ -77,13 +89,5 @@ namespace norviguet_control_fletes_api.Controllers
             return NoContent();
         }
 
-        // 3. Crear notificación para usuario
-        [HttpPost]
-        public async Task<ActionResult<NotificationDto>> CreateNotification([FromBody] CreateNotificationDto dto)
-        {
-            var notification = await _notificationService.CreateNotificationAsync(dto);
-            var resultDto = _mapper.Map<NotificationDto>(notification);
-            return CreatedAtAction(nameof(GetNotificationsByUser), new { userId = notification.UserId }, resultDto);
-        }
     }
 }

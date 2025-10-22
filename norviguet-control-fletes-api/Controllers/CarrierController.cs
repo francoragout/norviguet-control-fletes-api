@@ -30,27 +30,18 @@ namespace norviguet_control_fletes_api.Controllers
             return Ok(result);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<CarrierDto>> GetCarrier(int id)
-        {
-            var carrier = await _context.Carriers.FindAsync(id);
-            if (carrier == null)
-                return NotFound();
-            var result = _mapper.Map<CarrierDto>(carrier);
-            return Ok(result);
-        }
-
         [HttpPost]
+        [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> CreateCarrier([FromBody] CreateCarrierDto dto)
         {
             var carrier = _mapper.Map<Carrier>(dto);
             _context.Carriers.Add(carrier);
             await _context.SaveChangesAsync();
-            return Ok();
+            return NoContent();
         }
 
-
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> UpdateCarrier(int id, [FromBody] UpdateCarrierDto dto)
         {
             var carrier = await _context.Carriers.FindAsync(id);
@@ -62,6 +53,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> DeleteCarrier(int id)
         {
             var carrier = await _context.Carriers.FindAsync(id);
@@ -73,6 +65,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete("bulk")]
+        [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> DeleteCarriersBulk([FromBody] DeleteCarriersDto dto)
         {
             var carriers = await _context.Carriers.Where(c => dto.Ids.Contains(c.Id)).ToListAsync();

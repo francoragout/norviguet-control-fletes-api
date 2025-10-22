@@ -29,17 +29,8 @@ namespace norviguet_control_fletes_api.Controllers
             return Ok(result);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<SellerDto>> GetSeller(int id)
-        {
-            var seller = await _context.Sellers.FindAsync(id);
-            if (seller == null)
-                return NotFound();
-            var result = _mapper.Map<SellerDto>(seller);
-            return Ok(result);
-        }
-
         [HttpPost]
+        [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> CreateSeller([FromBody] CreateSellerDto dto)
         {
             var seller = _mapper.Map<Entities.Seller>(dto);
@@ -49,6 +40,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> UpdateSeller(int id, [FromBody] UpdateSellerDto dto)
         {
             var existingSeller = await _context.Sellers.FindAsync(id);
@@ -60,6 +52,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> DeleteSeller(int id)
         {
             var existingSeller = await _context.Sellers.FindAsync(id);
@@ -71,6 +64,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete("bulk")]
+        [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> DeleteSellers([FromBody] DeleteSellersDto dto)
         {
             var sellersToDelete = await _context.Sellers

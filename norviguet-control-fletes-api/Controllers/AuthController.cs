@@ -1,9 +1,7 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Models.Auth;
-using norviguet_control_fletes_api.Models.User;
 using norviguet_control_fletes_api.Services;
 using norviguet_control_fletes_api.Models.Notification;
 using norviguet_control_fletes_api.Data;
@@ -52,8 +50,8 @@ namespace norviguet_control_fletes_api.Controllers
                 var notificationDto = new CreateNotificationDto
                 {
                     UserId = admin.Id,
-                    Title = "Nuevo usuario registrado",
-                    Message = $"El usuario {user.Name} se ha registrado y está pendiente de aprobación.",
+                    Title = "Nuevo Usuario",
+                    Message = $"Se ha registrado un nuevo usuario y está pendiente de aprobación ({user.Email}).",
                     Link = "/dashboard/users"
                 };
                 await _notificationService.CreateNotificationAsync(notificationDto);
