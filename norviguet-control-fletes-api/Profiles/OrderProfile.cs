@@ -9,10 +9,11 @@ namespace norviguet_control_fletes_api.Profiles
         public OrderProfile()
         {
             CreateMap<Order, OrderDto>()
-                .ForMember(dest => dest.CarrierName, opt => opt.MapFrom(src => src.Carrier != null ? src.Carrier.Name : null))
-                .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => src.Customer != null ? src.Customer.Name : null))
-                .ForMember(dest => dest.CustomerLocation, opt => opt.MapFrom(src => src.Customer != null ? src.Customer.Location : null))
-                .ForMember(dest => dest.SellerName, opt => opt.MapFrom(src => src.Seller != null ? src.Seller.Name : null));
+                .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => src.Customer != null ? (string.IsNullOrEmpty(src.Customer.BusinessName) ? src.Customer.Name : $"{src.Customer.Name} {src.Customer.BusinessName}") : null))
+                .ForMember(dest => dest.SellerName, opt => opt.MapFrom(src => src.Seller != null ? (string.IsNullOrEmpty(src.Seller.Zone) ? src.Seller.Name : $"{src.Seller.Name} {src.Seller.Zone}") : null))
+                .ForMember(dest => dest.PendingDeliveryNoteNumbersCount, opt => opt.MapFrom(src => src.DeliveryNotes != null ? src.DeliveryNotes.Count(dn => dn.Status == DeliveryNoteStatus.Pending) : 0))
+                .ForMember(dest => dest.HasInvoice, opt => opt.MapFrom(src => src.Invoice != null))
+                .ForMember(dest => dest.HasPaymentOrder, opt => opt.MapFrom(src => src.Invoice != null && src.Invoice.PaymentOrder != null));
             CreateMap<CreateOrderDto, Order>();
             CreateMap<UpdateOrderDto, Order>();
             CreateMap<UpdateOrderStatusDto, Order>()

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
 using norviguet_control_fletes_api.Entities;
 using norviguet_control_fletes_api.Models.Carrier;
+using norviguet_control_fletes_api.Models.Common;
 
 namespace norviguet_control_fletes_api.Controllers
 {
@@ -27,6 +28,16 @@ namespace norviguet_control_fletes_api.Controllers
         {
             var carriers = await _context.Carriers.ToListAsync();
             var result = _mapper.Map<List<CarrierDto>>(carriers);
+            return Ok(result);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<CarrierDto>> GetCarrier(int id)
+        {
+            var carrier = await _context.Carriers.FindAsync(id);
+            if (carrier == null)
+                return NotFound();
+            var result = _mapper.Map<CarrierDto>(carrier);
             return Ok(result);
         }
 
@@ -66,7 +77,7 @@ namespace norviguet_control_fletes_api.Controllers
 
         [HttpDelete("bulk")]
         [Authorize(Roles = "Admin, Logistics")]
-        public async Task<IActionResult> DeleteCarriersBulk([FromBody] DeleteCarriersDto dto)
+        public async Task<IActionResult> DeleteCarriersBulk([FromBody] DeleteEntitiesDto dto)
         {
             var carriers = await _context.Carriers.Where(c => dto.Ids.Contains(c.Id)).ToListAsync();
             if (carriers.Count == 0)

@@ -19,7 +19,7 @@
         public UserRole Role { get; set; } = UserRole.Pending;
         public string? ImageUrl { get; set; }
 
-        // Relacion uno a muchos
+        // Relationships
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     }

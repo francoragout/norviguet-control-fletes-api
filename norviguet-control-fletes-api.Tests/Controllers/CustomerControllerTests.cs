@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Controllers;
 using norviguet_control_fletes_api.Data;
 using norviguet_control_fletes_api.Entities;
+using norviguet_control_fletes_api.Models.Common;
 using norviguet_control_fletes_api.Models.Customer;
 using norviguet_control_fletes_api.Profiles;
 
@@ -38,7 +39,7 @@ namespace norviguet_control_fletes_api.Tests
         public async Task GetCustomers_ReturnsOk_WithListOfCustomers()
         {
             // Arrange
-            _context.Customers.Add(new Customer { Id = 1, Name = "Test Customer", Location = "Test Location" });
+            _context.Customers.Add(new Customer { Id = 1, Name = "Test Customer" });
             await _context.SaveChangesAsync();
 
             // Act
@@ -55,7 +56,7 @@ namespace norviguet_control_fletes_api.Tests
         public async Task CreateCustomer_AddsCustomerToDatabase()
         {
             // Arrange
-            var dto = new CreateCustomerDto { Name = "New Customer", Location = "New Location" };
+            var dto = new CreateCustomerDto { Name = "New Customer" };
 
             // Act
             var result = await _controller.CreateCustomer(dto);
@@ -67,30 +68,10 @@ namespace norviguet_control_fletes_api.Tests
         }
 
         [Fact]
-        public async Task UpdateCustomer_UpdatesExistingCustomer()
-        {
-            // Arrange
-            var customer = new Customer { Id = 1, Name = "Old Name", Location = "Old Location" };
-            _context.Customers.Add(customer);
-            await _context.SaveChangesAsync();
-
-            var dto = new UpdateCustomerDto { Name = "Updated Name", Location = "Updated Location" };
-
-            // Act
-            var result = await _controller.UpdateCustomer(1, dto);
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            var updated = await _context.Customers.FindAsync(1);
-            Assert.Equal("Updated Name", updated!.Name);
-            Assert.Equal("Updated Location", updated.Location);
-        }
-
-        [Fact]
         public async Task DeleteCustomer_RemovesCustomerFromDatabase()
         {
             // Arrange
-            var customer = new Customer { Id = 1, Name = "ToDelete", Location = "Loc" };
+            var customer = new Customer { Id = 1, Name = "ToDelete" };
             _context.Customers.Add(customer);
             await _context.SaveChangesAsync();
 
@@ -107,12 +88,12 @@ namespace norviguet_control_fletes_api.Tests
         {
             // Arrange
             _context.Customers.AddRange(
-            new Customer { Id = 1, Name = "Customer1", Location = "Loc1" },
-            new Customer { Id = 2, Name = "Customer2", Location = "Loc2" }
+            new Customer { Id = 1, Name = "Customer1" },
+            new Customer { Id = 2, Name = "Customer2" }
             );
             await _context.SaveChangesAsync();
 
-            var dto = new DeleteCustomersDto { Ids = new List<int> { 1, 2 } };
+            var dto = new DeleteEntitiesDto { Ids = new List<int> { 1, 2 } };
 
             // Act
             var result = await _controller.DeleteCustomersBulk(dto);

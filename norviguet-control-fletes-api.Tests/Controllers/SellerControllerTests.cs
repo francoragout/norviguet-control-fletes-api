@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Controllers;
 using norviguet_control_fletes_api.Data;
 using norviguet_control_fletes_api.Entities;
+using norviguet_control_fletes_api.Models.Common;
 using norviguet_control_fletes_api.Models.Seller;
 using norviguet_control_fletes_api.Profiles;
 
@@ -111,7 +112,7 @@ namespace norviguet_control_fletes_api.Tests
             );
             await _context.SaveChangesAsync();
 
-            var dto = new DeleteSellersDto { Ids = new List<int> { 1, 2 } };
+            var dto = new DeleteEntitiesDto { Ids = new List<int> { 1, 2 } };
 
             // Act
             var result = await _controller.DeleteSellers(dto);

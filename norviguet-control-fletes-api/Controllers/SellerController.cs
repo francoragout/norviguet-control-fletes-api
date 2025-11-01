@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
+using norviguet_control_fletes_api.Models.Common;
 using norviguet_control_fletes_api.Models.Seller;
 
 namespace norviguet_control_fletes_api.Controllers
@@ -26,6 +27,16 @@ namespace norviguet_control_fletes_api.Controllers
         {
             var sellers = await _context.Sellers.ToListAsync();
             var result = _mapper.Map<List<SellerDto>>(sellers);
+            return Ok(result);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<SellerDto>> GetSeller(int id)
+        {
+            var seller = await _context.Sellers.FindAsync(id);
+            if (seller == null)
+                return NotFound();
+            var result = _mapper.Map<SellerDto>(seller);
             return Ok(result);
         }
 
@@ -65,7 +76,7 @@ namespace norviguet_control_fletes_api.Controllers
 
         [HttpDelete("bulk")]
         [Authorize(Roles = "Admin, Logistics")]
-        public async Task<IActionResult> DeleteSellers([FromBody] DeleteSellersDto dto)
+        public async Task<IActionResult> DeleteSellers([FromBody] DeleteEntitiesDto dto)
         {
             var sellersToDelete = await _context.Sellers
                 .Where(s => dto.Ids.Contains(s.Id))

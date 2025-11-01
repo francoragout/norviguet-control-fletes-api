@@ -6,7 +6,11 @@ namespace norviguet_control_fletes_api.Models.Invoice
         public DateTime CreatedAt { get; set; }
         public string Type { get; set; } = string.Empty;
         public string PointOfSale { get; set; } = string.Empty;
-        public string Number { get; set; } = string.Empty;
-        public List<int> OrderIds { get; set; } = new();
+        public string InvoiceNumber { get; set; } = string.Empty;
+        public int Price { get; set; }
+        public int OrderId { get; set; }
+
+        // Additional related data
+        public string OrderNumber { get; set; } = string.Empty;
     }
 }

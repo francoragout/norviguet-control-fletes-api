@@ -4,14 +4,9 @@ namespace norviguet_control_fletes_api.Models.Order
 {
     public class CreateOrderDto
     {
-        public OrderStatus Status { get; set; } = OrderStatus.Pending;
-        public string? DeliveryNote { get; set; }
-        public int? CarrierId { get; set; }
+        public string OrderNumber { get; set; } = string.Empty;
+        public OrderIncoterm Incoterm { get; set; } = OrderIncoterm.CIF;
         public int? SellerId { get; set; }
         public int? CustomerId { get; set; }
-        public decimal? Price { get; set; }
-        public int? InvoiceId { get; set; }
-        public int? PaymentId { get; set; }
-        public float? DiscountRate { get; set; }
     }
 }

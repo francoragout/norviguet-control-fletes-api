@@ -9,7 +9,7 @@
         public bool IsRead { get; set; } = false;
         public string Link { get; set; } = string.Empty;
 
-        // Relación con User
+        // Relationships
         public int UserId { get; set; }
         public User User { get; set; } = null!;
     }

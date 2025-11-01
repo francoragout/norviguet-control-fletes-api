@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
+using norviguet_control_fletes_api.Models.Common;
 using norviguet_control_fletes_api.Models.User;
 
 namespace norviguet_control_fletes_api.Controllers
@@ -104,7 +105,7 @@ namespace norviguet_control_fletes_api.Controllers
 
         [HttpDelete("bulk")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteUsers([FromBody] DeleteUsersDto dto)
+        public async Task<IActionResult> DeleteUsers([FromBody] DeleteEntitiesDto dto)
         {
             var users = await _context.Users.Where(u => dto.Ids.Contains(u.Id)).ToListAsync();
             if (users.Count == 0)

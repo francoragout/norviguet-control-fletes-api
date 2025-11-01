@@ -1,24 +1,23 @@
 using norviguet_control_fletes_api.Entities;
+using System.ComponentModel.DataAnnotations;
 
 namespace norviguet_control_fletes_api.Models.Order
 {
     public class OrderDto
     {
         public int Id { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
-        public OrderStatus Status { get; set; }
-        public string? DeliveryNote { get; set; }
-        public int? CarrierId { get; set; }
-        public string? CarrierName { get; set; }
-        public int? SellerId { get; set; }
-        public string? SellerName { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public OrderStatus Status { get; set; } = OrderStatus.Pending;
+        public string OrderNumber { get; set; } = string.Empty;
+        public OrderIncoterm Incoterm { get; set; } = OrderIncoterm.CIF;
         public int? CustomerId { get; set; }
+        public int? SellerId { get; set; }
+
+        // Additional related data
         public string? CustomerName { get; set; }
-        public string? CustomerLocation { get; set; }
-        public decimal? Price { get; set; }
-        public int? PaymentId { get; set; }
-        public int? InvoiceId { get; set; }
-        public float? DiscountRate { get; set; }
+        public string? SellerName { get; set; }
+        public int PendingDeliveryNoteNumbersCount { get; set; }
+        public Boolean HasInvoice { get; set; }
+        public Boolean HasPaymentOrder { get; set; }
     }
 }

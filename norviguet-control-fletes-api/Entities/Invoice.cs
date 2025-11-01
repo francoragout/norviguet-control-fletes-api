@@ -12,11 +12,14 @@
     {
         public int Id { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public InvoiceType Type { get; set; }
+        public InvoiceType Type { get; set; } = InvoiceType.A;
         public string PointOfSale { get; set; } = string.Empty;
-        public string Number { get; set; } = string.Empty;
+        public string InvoiceNumber { get; set; } = string.Empty;
+        public int Price { get; set; }
 
-        // Relación uno a muchos con Order
-        public ICollection<Order> Orders { get; set; } = new List<Order>();
+        // Relationships
+        public required Order Order { get; set; }
+        public int OrderId { get; set; }
+        public PaymentOrder? PaymentOrder { get; set; }
     }
 }

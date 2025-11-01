@@ -9,7 +9,7 @@ namespace norviguet_control_fletes_api.Profiles
         public InvoiceProfile()
         {
             CreateMap<Invoice, InvoiceDto>()
-                .ForMember(dest => dest.OrderIds, opt => opt.MapFrom(src => src.Orders.Select(o => o.Id)));
+                .ForMember(dest => dest.OrderNumber, opt => opt.MapFrom(src => src.Order != null ? src.Order.OrderNumber : string.Empty));               
             CreateMap<CreateInvoiceDto, Invoice>();
             CreateMap<UpdateInvoiceDto, Invoice>();
         }

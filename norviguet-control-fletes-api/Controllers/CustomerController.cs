@@ -4,13 +4,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
 using norviguet_control_fletes_api.Entities;
+using norviguet_control_fletes_api.Models.Common;
 using norviguet_control_fletes_api.Models.Customer;
 
 namespace norviguet_control_fletes_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class CustomerController : ControllerBase
     {
         private readonly NorviguetDbContext _context;
@@ -30,8 +30,17 @@ namespace norviguet_control_fletes_api.Controllers
             return Ok(result);
         }
 
+        [HttpGet("{id}")]
+        public async Task<ActionResult<CustomerDto>> GetCustomer(int id)
+        {
+            var customer = await _context.Customers.FindAsync(id);
+            if (customer == null)
+                return NotFound();
+            var result = _mapper.Map<CustomerDto>(customer);
+            return Ok(result);
+        }
+
         [HttpPost]
-        [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> CreateCustomer([FromBody] CreateCustomerDto dto)
         {
             var customer = _mapper.Map<Customer>(dto);
@@ -41,8 +50,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin, Logistics")]
-        public async Task<ActionResult<CustomerDto>> UpdateCustomer(int id, [FromBody] UpdateCustomerDto dto)
+        public async Task<IActionResult> UpdateCustomer(int id, [FromBody] UpdateCustomerDto dto)
         {
             var customer = await _context.Customers.FindAsync(id);
             if (customer == null)
@@ -50,11 +58,10 @@ namespace norviguet_control_fletes_api.Controllers
             _mapper.Map(dto, customer);
             await _context.SaveChangesAsync();
             var resultDto = _mapper.Map<CustomerDto>(customer);
-            return Ok(resultDto);
+            return Ok();
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> DeleteCustomer(int id)
         {
             var customer = await _context.Customers.FindAsync(id);
@@ -66,8 +73,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete("bulk")]
-        [Authorize(Roles = "Admin, Logistics")]
-        public async Task<IActionResult> DeleteCustomersBulk([FromBody] DeleteCustomersDto dto)
+        public async Task<IActionResult> DeleteCustomersBulk([FromBody] DeleteEntitiesDto dto)
         {
             var customers = await _context.Customers.Where(c => dto.Ids.Contains(c.Id)).ToListAsync();
             if (!customers.Any())

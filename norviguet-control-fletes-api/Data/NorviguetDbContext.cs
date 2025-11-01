@@ -7,13 +7,14 @@ namespace norviguet_control_fletes_api.Data
     {
         public DbSet<User> Users { get; set; } = null!;
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+        public DbSet<Notification> Notifications { get; set; } = null!;
         public DbSet<Order> Orders { get; set; } = null!;
+        public DbSet<DeliveryNote> DeliveryNotes { get; set; } = null!;
+        public DbSet<Invoice> Invoices { get; set; } = null!;
+        public DbSet<PaymentOrder> PaymentOrders { get; set; } = null!;
         public DbSet<Customer> Customers { get; set; } = null!;
         public DbSet<Seller> Sellers { get; set; } = null!;
         public virtual DbSet<Carrier> Carriers { get; set; } = null!;
-        public DbSet<Invoice> Invoices { get; set; } = null!;
-        public DbSet<Payment> Payments { get; set; } = null!;
-        public DbSet<Notification> Notifications { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Enum conversions
@@ -25,18 +26,22 @@ namespace norviguet_control_fletes_api.Data
                 .Property(o => o.Status)
                 .HasConversion<string>();
 
+            modelBuilder.Entity<Order>()
+                .Property(o => o.Incoterm)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<DeliveryNote>()
+               .Property(dn => dn.Status)
+               .HasConversion<string>();
+
             modelBuilder.Entity<Invoice>()
                 .Property(i => i.Type)
                 .HasConversion<string>();
 
             // Precision settings
-            modelBuilder.Entity<Order>()
-                .Property(o => o.Price)
-                .HasPrecision(18, 2);
-
-            modelBuilder.Entity<Order>()
-                .Property(o => o.DiscountRate)
-                .HasPrecision(18, 2);
+            //modelBuilder.Entity<Order>()
+            //    .Property(o => o.Price)
+            //    .HasPrecision(18, 2);
 
             // Relationships
             modelBuilder.Entity<User>()
@@ -45,41 +50,41 @@ namespace norviguet_control_fletes_api.Data
                 .HasForeignKey(rt => rt.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<Notification>()
-                .HasOne(n => n.User)
-                .WithMany(u => u.Notifications)
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Notifications)
+                .WithOne(n => n.User)
                 .HasForeignKey(n => n.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Order>()
-                .HasOne(o => o.Carrier)
-                .WithMany(c => c.Orders)
-                .HasForeignKey(o => o.CarrierId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .HasMany(o => o.DeliveryNotes)
+                .WithOne(dn => dn.Order)
+                .HasForeignKey(dn => dn.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<Order>()
-                .HasOne(o => o.Seller)
-                .WithMany(s => s.Orders)
+            modelBuilder.Entity<Carrier>()
+                .HasMany(c => c.DeliveryNotes)
+                .WithOne(dn => dn.Carrier)
+                .HasForeignKey(dn => dn.CarrierId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Invoice>()
+                .HasOne(i => i.Order)
+                .WithOne(o => o.Invoice)
+                .HasForeignKey<Invoice>(i => i.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Seller>()
+                .HasMany(s => s.Orders)
+                .WithOne(o => o.Seller)
                 .HasForeignKey(o => o.SellerId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<Order>()
-                .HasOne(o => o.Customer)
-                .WithMany(c => c.Orders)
+            modelBuilder.Entity<Customer>()
+                .HasMany(cu => cu.Orders)
+                .WithOne(o => o.Customer)
                 .HasForeignKey(o => o.CustomerId)
-                .OnDelete(DeleteBehavior.SetNull);
-
-            modelBuilder.Entity<Order>()
-                .HasOne(o => o.Invoice)
-                .WithMany(i => i.Orders)
-                .HasForeignKey(o => o.InvoiceId)
-                .OnDelete(DeleteBehavior.SetNull);
-
-            modelBuilder.Entity<Order>()
-                .HasOne(o => o.Payment)
-                .WithMany(p => p.Orders)
-                .HasForeignKey(o => o.PaymentId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Restrict);
 
             base.OnModelCreating(modelBuilder);
         }

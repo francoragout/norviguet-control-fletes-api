@@ -3,9 +3,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
-using norviguet_control_fletes_api.Models.Order;
-using norviguet_control_fletes_api.Models.Notification;
 using norviguet_control_fletes_api.Entities;
+using norviguet_control_fletes_api.Models.Common;
+using norviguet_control_fletes_api.Models.Notification;
+using norviguet_control_fletes_api.Models.Order;
 using norviguet_control_fletes_api.Services;
 
 namespace norviguet_control_fletes_api.Controllers
@@ -33,9 +34,9 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<ActionResult<List<OrderDto>>> GetOrders()
         {
             var orders = await _context.Orders
-                .Include(o => o.Carrier) // Incluir Carrier en la consulta
-                .Include(o => o.Customer) // Incluir Customer en la consulta
-                .Include(o => o.Seller) // Incluir Seller en la consulta
+                .Include(o => o.Seller)
+                .Include(o => o.Customer)
+                .Include(o => o.DeliveryNotes)
                 .ToListAsync();
             var result = _mapper.Map<List<OrderDto>>(orders);
             return Ok(result);
@@ -45,9 +46,8 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<ActionResult<OrderDto>> GetOrder(int id)
         {
             var order = await _context.Orders
-                .Include(o => o.Carrier) // Incluir Carrier en la consulta
-                .Include(o => o.Customer) // Incluir Customer en la consulta
-                .Include(o => o.Seller) // Incluir Seller en la consulta
+                .Include(o => o.Seller)
+                .Include(o => o.Customer)
                 .FirstOrDefaultAsync(o => o.Id == id);
             if (order == null)
                 return NotFound();
@@ -59,37 +59,11 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Logistics")]
         public async Task<ActionResult<OrderDto>> CreateOrder([FromBody] CreateOrderDto dto)
         {
-            // Validar existencia de PaymentId e InvoiceId si se especifican
-            if (dto.PaymentId.HasValue)
-            {
-                var paymentExists = await _context.Payments.AnyAsync(p => p.Id == dto.PaymentId.Value);
-                if (!paymentExists)
-                {
-                    return BadRequest(new
-                    {
-                        code = "INVALID_PAYMENT_ID",
-                        message = $"The PaymentId {dto.PaymentId.Value} does not exist."
-                    });
-                }
-            }
-            if (dto.InvoiceId.HasValue)
-            {
-                var invoiceExists = await _context.Invoices.AnyAsync(i => i.Id == dto.InvoiceId.Value);
-                if (!invoiceExists)
-                {
-                    return BadRequest(new
-                    {
-                        code = "INVALID_INVOICE_ID",
-                        message = $"The InvoiceId {dto.InvoiceId.Value} does not exist."
-                    });
-                }
-            }
-
-            var order = _mapper.Map<Entities.Order>(dto);
+            var order = _mapper.Map<Order>(dto);
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
-            // Notificar a todos los usuarios cuyo rol no sea Pending
+            // Send notification to all users except pending ones
             var usersToNotify = await _context.Users
                 .Where(u => u.Role != UserRole.Pending)
                 .ToListAsync();
@@ -117,32 +91,6 @@ namespace norviguet_control_fletes_api.Controllers
             if (order == null)
                 return NotFound();
 
-            // Validar existencia de PaymentId e InvoiceId si se especifican
-            if (dto.PaymentId.HasValue)
-            {
-                var paymentExists = await _context.Payments.AnyAsync(p => p.Id == dto.PaymentId.Value);
-                if (!paymentExists)
-                {
-                    return BadRequest(new
-                    {
-                        code = "INVALID_PAYMENT_ID",
-                        message = $"The PaymentId {dto.PaymentId.Value} does not exist."
-                    });
-                }
-            }
-            if (dto.InvoiceId.HasValue)
-            {
-                var invoiceExists = await _context.Invoices.AnyAsync(i => i.Id == dto.InvoiceId.Value);
-                if (!invoiceExists)
-                {
-                    return BadRequest(new
-                    {
-                        code = "INVALID_INVOICE_ID",
-                        message = $"The InvoiceId {dto.InvoiceId.Value} does not exist."
-                    });
-                }
-            }
-
             _mapper.Map(dto, order);
             await _context.SaveChangesAsync();
             return NoContent();
@@ -156,7 +104,7 @@ namespace norviguet_control_fletes_api.Controllers
             if (order == null)
                 return NotFound();
 
-            _mapper.Map(dto, order); // Usa el mapeo que convierte string a enum
+            _mapper.Map(dto, order);
 
             await _context.SaveChangesAsync();
             return NoContent();
@@ -177,7 +125,7 @@ namespace norviguet_control_fletes_api.Controllers
 
         [HttpDelete("bulk")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteOrdersBulk([FromBody] DeleteOrdersDto dto)
+        public async Task<IActionResult> DeleteOrdersBulk([FromBody] DeleteEntitiesDto dto)
         {
             var orders = await _context.Orders
                 .Where(o => dto.Ids.Contains(o.Id))

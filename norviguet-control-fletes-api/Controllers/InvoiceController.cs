@@ -4,13 +4,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
 using norviguet_control_fletes_api.Entities;
+using norviguet_control_fletes_api.Models.Common;
 using norviguet_control_fletes_api.Models.Invoice;
 
 namespace norviguet_control_fletes_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class InvoiceController : ControllerBase
     {
         private readonly NorviguetDbContext _context;
@@ -23,12 +23,26 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin, Purchasing")]
         public async Task<ActionResult<List<InvoiceDto>>> GetInvoices()
         {
             var invoices = await _context.Invoices
-                .Include(i => i.Orders)
+                .Include(i => i.Order)
                 .ToListAsync();
             var result = _mapper.Map<List<InvoiceDto>>(invoices);
+            return Ok(result);
+        }
+
+        [HttpGet("{id}")]
+        //[Authorize(Roles = "Admin, Purchasing")]
+        public async Task<ActionResult<InvoiceDto>> GetInvoice(int id)
+        {
+            var invoice = await _context.Invoices
+                .Include(i => i.Order)
+                .FirstOrDefaultAsync(i => i.Id == id);
+            if (invoice == null)
+                return NotFound();
+            var result = _mapper.Map<InvoiceDto>(invoice);
             return Ok(result);
         }
 
@@ -68,7 +82,7 @@ namespace norviguet_control_fletes_api.Controllers
 
         [HttpDelete("bulk")]
         [Authorize(Roles = "Admin, Purchasing")]
-        public async Task<IActionResult> DeleteInvoicesBulk([FromBody] DeleteInvoicesDto dto)
+        public async Task<IActionResult> DeleteInvoicesBulk([FromBody] DeleteEntitiesDto dto)
         {
             var invoices = await _context.Invoices.Where(i => dto.Ids.Contains(i.Id)).ToListAsync();
             if (invoices.Count == 0)

@@ -12,7 +12,7 @@
         public string? DeviceInfo { get; set; } // Opcional: información del dispositivo
         public bool IsActive => RevokedAt == null && DateTime.UtcNow < ExpiresAt;
 
-        // Relación con User
+        // Relationships
         public int UserId { get; set; }
         public User User { get; set; } = null!;
     }
