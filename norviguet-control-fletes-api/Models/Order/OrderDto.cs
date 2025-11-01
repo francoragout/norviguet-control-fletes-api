@@ -17,7 +17,6 @@ namespace norviguet_control_fletes_api.Models.Order
         public string? CustomerName { get; set; }
         public string? SellerName { get; set; }
         public int PendingDeliveryNoteNumbersCount { get; set; }
-        public Boolean HasInvoice { get; set; }
-        public Boolean HasPaymentOrder { get; set; }
+        public bool HasInvoice { get; set; }
     }
 }

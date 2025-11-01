@@ -11,6 +11,6 @@ namespace norviguet_control_fletes_api.Models.Invoice
         public int OrderId { get; set; }
 
         // Additional related data
-        public string OrderNumber { get; set; } = string.Empty;
+        public bool HasPaymentOrder { get; set; }
     }
 }

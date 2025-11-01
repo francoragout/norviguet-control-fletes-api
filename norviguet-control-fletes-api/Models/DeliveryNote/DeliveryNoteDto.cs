@@ -16,6 +16,5 @@ namespace norviguet_control_fletes_api.Models.DeliveryNote
 
         // Additional related data
         public string? CarrierName { get; set; }
-        public string OrderNumber { get; set; } = string.Empty;
     }
 }

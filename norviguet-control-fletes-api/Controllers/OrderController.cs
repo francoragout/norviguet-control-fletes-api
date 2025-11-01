@@ -37,6 +37,7 @@ namespace norviguet_control_fletes_api.Controllers
                 .Include(o => o.Seller)
                 .Include(o => o.Customer)
                 .Include(o => o.DeliveryNotes)
+                .Include(o => o.Invoice)
                 .ToListAsync();
             var result = _mapper.Map<List<OrderDto>>(orders);
             return Ok(result);

@@ -31,9 +31,7 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<ActionResult<List<DeliveryNoteDto>>> GetDeliveryNotesByOrderId(int orderId)
         {
             var deliveryNotes = await _context.DeliveryNotes
-                .Include(d => d.Order)
-                .Include(d => d.Carrier)
-                .Where(d => d.OrderId == orderId)
+                .Include(dn => dn.Carrier)
                 .ToListAsync();
             var result = _mapper.Map<List<DeliveryNoteDto>>(deliveryNotes);
             return Ok(result);
@@ -44,7 +42,6 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<ActionResult<DeliveryNoteDto>> GetDeliveryNote(int id)
         {
             var note = await _context.DeliveryNotes
-                .Include(d => d.Order)
                 .Include(d => d.Carrier)
                 .FirstOrDefaultAsync(d => d.Id == id);
             if (note == null) 
