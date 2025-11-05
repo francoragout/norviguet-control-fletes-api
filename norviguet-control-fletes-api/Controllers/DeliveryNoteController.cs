@@ -13,6 +13,7 @@ namespace norviguet_control_fletes_api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class DeliveryNoteController : ControllerBase
     {
         private readonly NorviguetDbContext _context;
@@ -27,7 +28,6 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpGet("order/{orderId}")]
-        [Authorize(Roles = "Admin, Logistics")]
         public async Task<ActionResult<List<DeliveryNoteDto>>> GetDeliveryNotesByOrderId(int orderId)
         {
             var deliveryNotes = await _context.DeliveryNotes
@@ -43,7 +43,6 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<ActionResult<DeliveryNoteDto>> GetDeliveryNote(int id)
         {
             var note = await _context.DeliveryNotes
-                .Include(d => d.Carrier)
                 .FirstOrDefaultAsync(d => d.Id == id);
             if (note == null)
                 return NotFound();

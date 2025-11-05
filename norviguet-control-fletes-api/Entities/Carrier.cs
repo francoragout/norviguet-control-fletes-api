@@ -8,5 +8,6 @@
         // Relationships
         public ICollection<DeliveryNote> DeliveryNotes { get; set; } = new List<DeliveryNote>();
         public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
+        public ICollection<PaymentOrder> PaymentOrders { get; set; } = new List<PaymentOrder>();
     }
 }

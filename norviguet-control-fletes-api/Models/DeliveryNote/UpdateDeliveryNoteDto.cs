@@ -14,6 +14,8 @@ namespace norviguet_control_fletes_api.Models.DeliveryNote
         [Required]
         [StringLength(50, ErrorMessage = "Location must be between 1 and 50 characters long.")]
         public string Location { get; set; } = string.Empty;
+
+        // Foreign Keys
         public int CarrierId { get; set; }
         public int OrderId { get; set; }
     }

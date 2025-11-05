@@ -22,8 +22,8 @@
         public OrderIncoterm Incoterm { get; set; } = OrderIncoterm.CIF;
 
         // Foreign Keys
-        public int? SellerId { get; set; }
-        public int? CustomerId { get; set; }
+        public int SellerId { get; set; }
+        public int CustomerId { get; set; }
 
         // Relationships
         public required Seller Seller { get; set; }

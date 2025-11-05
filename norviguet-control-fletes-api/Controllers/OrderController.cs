@@ -45,6 +45,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin, Logistics")]
         public async Task<ActionResult<OrderDto>> GetOrder(int id)
         {
             var order = await _context.Orders

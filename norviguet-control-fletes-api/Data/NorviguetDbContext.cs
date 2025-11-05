@@ -55,6 +55,15 @@ namespace norviguet_control_fletes_api.Data
                 .HasIndex(po => po.PaymentOrderNumber)
                 .IsUnique();
 
+            // Unique combined constraints
+            modelBuilder.Entity<Invoice>()
+                .HasIndex(i => new { i.OrderId, i.CarrierId })
+                .IsUnique();
+
+            modelBuilder.Entity<PaymentOrder>()
+                .HasIndex(po => new { po.OrderId, po.CarrierId })
+                .IsUnique();
+
             // Precision settings
             modelBuilder.Entity<Invoice>()
                 .Property(o => o.Price)
@@ -73,8 +82,44 @@ namespace norviguet_control_fletes_api.Data
                 .HasForeignKey(n => n.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<Order>()
+                .HasMany(o => o.DeliveryNotes)
+                .WithOne(dn => dn.Order)
+                .HasForeignKey(dn => dn.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Order>()
+                .HasMany(o => o.Invoices)
+                .WithOne(i => i.Order)
+                .HasForeignKey(i => i.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Order>()
+                .HasMany(o => o.PaymentOrders)
+                .WithOne(po => po.Order)
+                .HasForeignKey(po => po.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Carrier>()
+                .HasMany(c => c.DeliveryNotes)
+                .WithOne(dn => dn.Carrier)
+                .HasForeignKey(dn => dn.CarrierId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Carrier>()
+                .HasMany(c => c.Invoices)
+                .WithOne(i => i.Carrier)
+                .HasForeignKey(i => i.CarrierId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Carrier>()
+                .HasMany(c => c.PaymentOrders)
+                .WithOne(po => po.Carrier)
+                .HasForeignKey(po => po.CarrierId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<Customer>()
-                .HasMany(cu => cu.Orders)
+                .HasMany(c => c.Orders)
                 .WithOne(o => o.Customer)
                 .HasForeignKey(o => o.CustomerId)
                 .OnDelete(DeleteBehavior.Restrict);
@@ -84,28 +129,6 @@ namespace norviguet_control_fletes_api.Data
                 .WithOne(o => o.Seller)
                 .HasForeignKey(o => o.SellerId)
                 .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Order>()
-                .HasMany(o => o.DeliveryNotes)
-                .WithOne(dn => dn.Order)
-                .HasForeignKey(dn => dn.OrderId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Order>()
-                .HasMany(o => o.PaymentOrders)
-                .WithOne(po => po.Order)
-                .HasForeignKey(po => po.OrderId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Order>()
-            .HasMany(o => o.Invoices)
-                .WithOne(i => i.Order)
-                .HasForeignKey(i => i.OrderId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Invoice>()
-                .HasIndex(i => new { i.OrderId, i.CarrierId })
-                .IsUnique();
 
             base.OnModelCreating(modelBuilder);
         }

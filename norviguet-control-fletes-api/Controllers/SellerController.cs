@@ -31,6 +31,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin, Logistics")]
         public async Task<ActionResult<SellerDto>> GetSeller(int id)
         {
             var seller = await _context.Sellers.FindAsync(id);

@@ -6,9 +6,7 @@ namespace norviguet_control_fletes_api.Models.Payment
     {
         [Required]
         public string PaymentOrderNumber { get; set; } = string.Empty;
-        [Required]
-        public int InvoiceId { get; set; }
-        [Required]
         public int OrderId { get; set; }
+        public int CarrierId { get; set; }
     }
 }

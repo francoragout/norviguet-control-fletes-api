@@ -10,6 +10,7 @@ namespace norviguet_control_fletes_api.Models.Order
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
         public string OrderNumber { get; set; } = string.Empty;
         public OrderIncoterm Incoterm { get; set; } = OrderIncoterm.CIF;
+
         // Foreign Keys
         public int CustomerId { get; set; }
         public int SellerId { get; set; }

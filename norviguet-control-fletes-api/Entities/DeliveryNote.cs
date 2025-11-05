@@ -17,11 +17,11 @@
         public string Location { get; set; } = string.Empty;
 
         // Foreign Keys
-        public int CarrierId { get; set; }
         public int OrderId { get; set; }
+        public int CarrierId { get; set; }
 
         // Relationships
+        public required Order Order { get; set; }
         public required Carrier Carrier { get; set; }
-        public Order Order { get; set; } = null!;
     }
 }

@@ -32,6 +32,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin, Logistics")]
         public async Task<ActionResult<CarrierDto>> GetCarrier(int id)
         {
             var carrier = await _context.Carriers.FindAsync(id);

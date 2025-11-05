@@ -8,7 +8,8 @@ namespace norviguet_control_fletes_api.Profiles
     {
         public PaymentOrderProfile()
         {
-            CreateMap<PaymentOrder, PaymentOrderDto>();
+            CreateMap<PaymentOrder, PaymentOrderDto>()
+                .ForMember(dest => dest.CarrierName, opt => opt.MapFrom(src => src.Carrier.Name));
             CreateMap<CreatePaymentOrderDto, PaymentOrder>();
             CreateMap<UpdatePaymentOrderDto, PaymentOrder>();
         }

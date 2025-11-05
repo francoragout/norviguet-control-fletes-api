@@ -5,11 +5,13 @@
         public int Id { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string PaymentOrderNumber { get; set; } = string.Empty;
-        public int InvoiceId { get; set; }
+
+        // Foreign Keys
         public int OrderId { get; set; }
+        public int CarrierId { get; set; }
 
         // Relationships
-        public required Invoice Invoice { get; set; }
         public required Order Order { get; set; }
+        public required Carrier Carrier { get; set; }
     }
 }

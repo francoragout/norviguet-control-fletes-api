@@ -12,6 +12,7 @@ namespace norviguet_control_fletes_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class PaymentOrderController : ControllerBase
     {
         private readonly NorviguetDbContext _context;
@@ -24,12 +25,11 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpGet("order/{orderId}")]
-        [Authorize(Roles = "Admin, Payments")]
         public async Task<ActionResult<List<InvoiceDto>>> GetPaymentOrdersByOrderId(int orderId)
         {
             var paymentOrders = await _context.PaymentOrders
                 .Where(po => po.OrderId == orderId)
-                .Include(po => po.Invoice)
+                .Include(po => po.Carrier)
                 .ToListAsync();
             var result = _mapper.Map<List<PaymentOrderDto>>(paymentOrders);
             return Ok(result);
@@ -41,7 +41,6 @@ namespace norviguet_control_fletes_api.Controllers
         {
 
             var paymentOrder = await _context.PaymentOrders
-                .Include(po => po.Invoice)
                 .FirstOrDefaultAsync(po => po.Id == id);
             if (paymentOrder == null)
                 return NotFound();
@@ -86,7 +85,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin, Payments")]
         public async Task<IActionResult> DeletePaymentOrder(int id)
         {
             var paymentOrder = await _context.PaymentOrders.FindAsync(id);
@@ -98,7 +97,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete("bulk")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin, Payments")]
         public async Task<IActionResult> DeletePaymentOrdersBulk([FromBody] DeleteEntitiesDto dto)
         {
             var paymentOrders = await _context.Customers.Where(po => dto.Ids.Contains(po.Id)).ToListAsync();

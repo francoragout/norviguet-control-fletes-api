@@ -11,6 +11,7 @@ namespace norviguet_control_fletes_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class InvoiceController : ControllerBase
     {
         private readonly NorviguetDbContext _context;
@@ -23,7 +24,6 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpGet("order/{orderId}")]
-        [Authorize(Roles = "Admin, Purchasing")]
         public async Task<ActionResult<List<InvoiceDto>>> GetInvoicesByOrderId(int orderId)
         {
             var invoices = await _context.Invoices
@@ -39,7 +39,6 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<ActionResult<InvoiceDto>> GetInvoice(int id)
         {
             var invoice = await _context.Invoices
-                .Include(i => i.Order)
                 .FirstOrDefaultAsync(i => i.Id == id);
             if (invoice == null)
                 return NotFound();

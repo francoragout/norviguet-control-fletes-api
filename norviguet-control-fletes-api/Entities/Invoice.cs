@@ -21,8 +21,7 @@
         public int OrderId { get; set; }
 
         // Relationships
-        public required Carrier Carrier { get; set; }
         public required Order Order { get; set; }
-        public PaymentOrder? PaymentOrder { get; set; }
+        public required Carrier Carrier { get; set; }
     }
 }
