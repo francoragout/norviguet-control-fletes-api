@@ -56,7 +56,11 @@ namespace norviguet_control_fletes_api.Tests
         public async Task CreateCustomer_AddsCustomerToDatabase()
         {
             // Arrange
-            var dto = new CreateCustomerDto { Name = "New Customer" };
+            var dto = new CreateCustomerDto
+            {
+                Name = "New Customer",
+                CUIT = "20-12345678-1" // Valor válido requerido
+            };
 
             // Act
             var result = await _controller.CreateCustomer(dto);
@@ -65,6 +69,29 @@ namespace norviguet_control_fletes_api.Tests
             Assert.IsType<NoContentResult>(result);
             Assert.Single(_context.Customers);
             Assert.Equal("New Customer", _context.Customers.First().Name);
+            Assert.Equal("20-12345678-1", _context.Customers.First().CUIT);
+        }
+
+        [Fact]
+        public async Task UpdateCustomer_UpdatesExistingCustomer()
+        {
+            // Arrange
+            var customer = new Customer { Id = 1, Name = "Old Name", CUIT = "20-12345678-1" };
+            _context.Customers.Add(customer);
+            await _context.SaveChangesAsync();
+            var dto = new UpdateCustomerDto
+            {
+                Name = "Updated Name",
+                CUIT = "20-87654321-0" // Valor válido requerido
+            };
+            // Act
+            var result = await _controller.UpdateCustomer(1, dto);
+
+            // Assert
+            Assert.IsType<NoContentResult>(result);
+            var updatedCustomer = _context.Customers.First();
+            Assert.Equal("Updated Name", updatedCustomer.Name);
+            Assert.Equal("20-87654321-0", updatedCustomer.CUIT);
         }
 
         [Fact]

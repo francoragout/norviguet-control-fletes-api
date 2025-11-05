@@ -58,7 +58,7 @@ namespace norviguet_control_fletes_api.Controllers
             _mapper.Map(dto, customer);
             await _context.SaveChangesAsync();
             var resultDto = _mapper.Map<CustomerDto>(customer);
-            return Ok();
+            return NoContent();
         }
 
         [HttpDelete("{id}")]

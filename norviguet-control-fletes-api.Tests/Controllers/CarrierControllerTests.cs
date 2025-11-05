@@ -20,7 +20,7 @@ namespace norviguet_control_fletes_api.Tests
         {
             // Configurar DB en memoria
             var options = new DbContextOptionsBuilder<NorviguetDbContext>()
-                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()) // GUID para evitar interferencia entre tests
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
 
             _context = new NorviguetDbContext(options);
