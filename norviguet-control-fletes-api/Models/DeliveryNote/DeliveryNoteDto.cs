@@ -9,12 +9,14 @@ namespace norviguet_control_fletes_api.Models.DeliveryNote
         public DateTime CreatedAt { get; set; }
         public DeliveryNoteStatus Status { get; set; } = DeliveryNoteStatus.Pending;
         public string DeliveryNoteNumber { get; set; } = string.Empty;
-        public string? Address { get; set; }
-        public string? Location { get; set; }
-        public int? CarrierId { get; set; }
+        public string Address { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
+
+        // Foreign Keys
+        public int CarrierId { get; set; }
         public int OrderId { get; set; }
 
         // Additional related data
-        public string? CarrierName { get; set; }
+        public string CarrierName { get; set; } = string.Empty;
     }
 }

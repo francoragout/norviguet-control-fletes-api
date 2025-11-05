@@ -37,7 +37,8 @@ namespace norviguet_control_fletes_api.Controllers
                 .Include(o => o.Seller)
                 .Include(o => o.Customer)
                 .Include(o => o.DeliveryNotes)
-                .Include(o => o.Invoice)
+                .Include(o => o.Invoices)
+                .Include(o => o.PaymentOrders)
                 .ToListAsync();
             var result = _mapper.Map<List<OrderDto>>(orders);
             return Ok(result);
@@ -60,37 +61,45 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Logistics")]
         public async Task<ActionResult<OrderDto>> CreateOrder([FromBody] CreateOrderDto dto)
         {
+            if (await _context.Orders.AnyAsync(o => o.OrderNumber == dto.OrderNumber))
+                return Conflict(new { message = "Order number already exists." });
+
             var order = _mapper.Map<Order>(dto);
             _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
 
-            // Send notification to all users except pending ones
             var usersToNotify = await _context.Users
                 .Where(u => u.Role != UserRole.Pending)
                 .ToListAsync();
 
-            foreach (var user in usersToNotify)
-            {
-                var notificationDto = new CreateNotificationDto
+            var notificationTasks = usersToNotify.Select(user =>
+                _notificationService.CreateNotificationAsync(new CreateNotificationDto
                 {
                     UserId = user.Id,
                     Title = "Nuevo Pedido",
                     Message = $"Se ha creado un nuevo pedido (ID: {order.Id}).",
                     Link = $"/dashboard/orders/{order.Id}/update"
-                };
-                await _notificationService.CreateNotificationAsync(notificationDto);
-            }
+                })
+            );
+
+            await Task.WhenAll(notificationTasks);
 
             var resultDto = _mapper.Map<OrderDto>(order);
             return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, resultDto);
         }
 
+
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateOrder(int id, [FromBody] UpdateOrderDto dto)
         {
+            if (await _context.Orders.AnyAsync(o => o.OrderNumber == dto.OrderNumber))
+                return Conflict(new { message = "Order number already exists." });
+
             var order = await _context.Orders.FindAsync(id);
             if (order == null)
                 return NotFound();
+
+            if (await _context.Orders.AnyAsync(o => o.OrderNumber == dto.OrderNumber && o.Id != id))
+                return Conflict(new { message = "Order number already exists." });
 
             _mapper.Map(dto, order);
             await _context.SaveChangesAsync();

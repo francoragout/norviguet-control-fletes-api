@@ -10,9 +10,17 @@ namespace norviguet_control_fletes_api.Profiles
         {
             CreateMap<Order, OrderDto>()
                 .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => src.Customer != null ? (string.IsNullOrEmpty(src.Customer.BusinessName) ? src.Customer.Name : $"{src.Customer.Name} {src.Customer.BusinessName}") : null))
-                .ForMember(dest => dest.SellerName, opt => opt.MapFrom(src => src.Seller != null ? (string.IsNullOrEmpty(src.Seller.Zone) ? src.Seller.Name : $"{src.Seller.Name} {src.Seller.Zone}") : null))
-                .ForMember(dest => dest.PendingDeliveryNoteNumbersCount, opt => opt.MapFrom(src => src.DeliveryNotes != null ? src.DeliveryNotes.Count(dn => dn.Status == DeliveryNoteStatus.Pending) : 0))
-                .ForMember(dest => dest.HasInvoice, opt => opt.MapFrom(src => src.Invoice != null));
+                .ForMember(dest => dest.SellerName, opt => opt.MapFrom(src => src.Seller != null ? (string.IsNullOrEmpty(src.Seller.Zone) ? src.Seller.Name : $"{src.Seller.Name} {src.Seller.Zone}") : null))              
+                .ForMember(dest => dest.CarriersCount, opt => opt.MapFrom(src =>
+                    src.DeliveryNotes != null ? src.DeliveryNotes.Select(dn => dn.CarrierId).Distinct().Count() : 0))
+                .ForMember(dest => dest.InvoicesCount, opt => opt.MapFrom(src =>
+                    src.Invoices != null ? src.Invoices.Count : 0))
+                .ForMember(dest => dest.PaymentOrdersCount, opt => opt.MapFrom(src =>
+                    src.PaymentOrders != null ? src.PaymentOrders.Count : 0))
+                .ForMember(dest => dest.DeliveryNotesCount, opt => opt.MapFrom(src =>
+                    src.DeliveryNotes != null ? src.DeliveryNotes.Count(dn => dn.Status != DeliveryNoteStatus.Cancelled) : 0))
+                .ForMember(dest => dest.ApprovedDeliveryNotesCount, opt => opt.MapFrom(src =>
+                    src.DeliveryNotes != null ? src.DeliveryNotes.Count(dn => dn.Status == DeliveryNoteStatus.Approved) : 0));
             CreateMap<CreateOrderDto, Order>();
             CreateMap<UpdateOrderDto, Order>();
             CreateMap<UpdateOrderStatusDto, Order>()

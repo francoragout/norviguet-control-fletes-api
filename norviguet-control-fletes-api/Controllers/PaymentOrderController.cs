@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
 using norviguet_control_fletes_api.Entities;
 using norviguet_control_fletes_api.Models.Common;
+using norviguet_control_fletes_api.Models.Invoice;
 using norviguet_control_fletes_api.Models.Payment;
 
 namespace norviguet_control_fletes_api.Controllers
@@ -22,12 +23,13 @@ namespace norviguet_control_fletes_api.Controllers
             _mapper = mapper;
         }
 
-        [HttpGet]
+        [HttpGet("order/{orderId}")]
         [Authorize(Roles = "Admin, Payments")]
-        public async Task<ActionResult<List<PaymentOrderDto>>> GetPaymentOrders()
+        public async Task<ActionResult<List<InvoiceDto>>> GetPaymentOrdersByOrderId(int orderId)
         {
             var paymentOrders = await _context.PaymentOrders
                 .Include(po => po.Invoice)
+                .Where(po => po.OrderId == orderId)
                 .ToListAsync();
             var result = _mapper.Map<List<PaymentOrderDto>>(paymentOrders);
             return Ok(result);
@@ -37,6 +39,7 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Payments")]
         public async Task<ActionResult<PaymentOrderDto>> GetPaymentOrder(int id)
         {
+
             var paymentOrder = await _context.PaymentOrders
                 .Include(po => po.Invoice)
                 .FirstOrDefaultAsync(po => po.Id == id);
@@ -50,6 +53,13 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Payments")]
         public async Task<IActionResult> CreatePaymentOrder([FromBody] CreatePaymentOrderDto dto)
         {
+            if (await _context.PaymentOrders.AnyAsync(po => po.PaymentOrderNumber == dto.PaymentOrderNumber))
+                return Conflict(new
+                {
+                    code = "PATMENT_ORDER_NUMBER_ALREADY_EXISTS",
+                    message = "Payment order number already exists."
+                });
+
             var paymentOrder = _mapper.Map<PaymentOrder>(dto);
             _context.PaymentOrders.Add(paymentOrder);
             await _context.SaveChangesAsync();
@@ -60,6 +70,13 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Payments")]
         public async Task<IActionResult> UpdatePaymentOrder(int id, [FromBody] UpdatePaymentOrderDto dto)
         {
+            if (await _context.PaymentOrders.AnyAsync(po => po.PaymentOrderNumber == dto.PaymentOrderNumber))
+                return Conflict(new
+                {
+                    code = "PATMENT_ORDER_NUMBER_ALREADY_EXISTS",
+                    message = "Payment order number already exists."
+                });
+
             var existingPaymentOrder = await _context.PaymentOrders.FindAsync(id);
             if (existingPaymentOrder == null)
                 return NotFound();
@@ -91,6 +108,5 @@ namespace norviguet_control_fletes_api.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
-
     }
 }

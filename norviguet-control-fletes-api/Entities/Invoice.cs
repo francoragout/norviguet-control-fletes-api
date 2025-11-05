@@ -13,13 +13,16 @@
         public int Id { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public InvoiceType Type { get; set; } = InvoiceType.A;
-        public string PointOfSale { get; set; } = string.Empty;
         public string InvoiceNumber { get; set; } = string.Empty;
         public int Price { get; set; }
 
-        // Relationships
-        public required Order Order { get; set; }
+        // Foreign Keys
+        public int CarrierId { get; set; }
         public int OrderId { get; set; }
+
+        // Relationships
+        public required Carrier Carrier { get; set; }
+        public required Order Order { get; set; }
         public PaymentOrder? PaymentOrder { get; set; }
     }
 }

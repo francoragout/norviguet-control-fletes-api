@@ -6,7 +6,7 @@ namespace norviguet_control_fletes_api.Models.Order
     {
         public string OrderNumber { get; set; } = string.Empty;
         public OrderIncoterm Incoterm { get; set; } = OrderIncoterm.CIF;
-        public int? SellerId { get; set; }
-        public int? CustomerId { get; set; }
+        public int SellerId { get; set; }
+        public int CustomerId { get; set; }
     }
 }

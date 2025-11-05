@@ -44,7 +44,7 @@ namespace norviguet_control_fletes_api.Controllers
             var note = await _context.DeliveryNotes
                 .Include(d => d.Carrier)
                 .FirstOrDefaultAsync(d => d.Id == id);
-            if (note == null) 
+            if (note == null)
                 return NotFound();
             var result = _mapper.Map<DeliveryNoteDto>(note);
             return Ok(result);
@@ -54,11 +54,13 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Logistics")]
         public async Task<ActionResult<DeliveryNoteDto>> CreateDeliveryNote(CreateDeliveryNoteDto dto)
         {
+            if (await _context.DeliveryNotes.AnyAsync(dn => dn.DeliveryNoteNumber == dto.DeliveryNoteNumber))
+                return Conflict(new { message = "Delivery note number already exists." });
+
             var deliveryNote = _mapper.Map<DeliveryNote>(dto);
             _context.DeliveryNotes.Add(deliveryNote);
             await _context.SaveChangesAsync();
 
-            // Send notification to admin and logistics users
             var userToNotify = await _context.Users
                 .Where(u => u.Role == UserRole.Admin || u.Role == UserRole.Logistics)
                 .ToListAsync();
@@ -84,7 +86,7 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<IActionResult> UpdateDeliveryNote(int id, [FromBody] UpdateDeliveryNoteDto dto)
         {
             var deliveryNote = await _context.DeliveryNotes.FindAsync(id);
-            if (deliveryNote == null) 
+            if (deliveryNote == null)
                 return NotFound();
 
             _mapper.Map(dto, deliveryNote);
@@ -97,7 +99,7 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<IActionResult> UpdateDeliveryNoteStatus(int id, [FromBody] UpdateDeliveryNoteStatusDto dto)
         {
             var deliveryNote = await _context.DeliveryNotes.FindAsync(id);
-            if (deliveryNote == null) 
+            if (deliveryNote == null)
                 return NotFound();
 
             _mapper.Map(dto, deliveryNote);
@@ -112,7 +114,7 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<IActionResult> DeleteDeliveryNote(int id)
         {
             var deliveryNote = await _context.DeliveryNotes.FindAsync(id);
-            if (deliveryNote == null) 
+            if (deliveryNote == null)
                 return NotFound();
             _context.DeliveryNotes.Remove(deliveryNote);
             await _context.SaveChangesAsync();
@@ -126,7 +128,7 @@ namespace norviguet_control_fletes_api.Controllers
             var deliveryNotes = await _context.DeliveryNotes
                 .Where(dn => dto.Ids.Contains(dn.Id))
                 .ToListAsync();
-            if (deliveryNotes.Count ==0)
+            if (deliveryNotes.Count == 0)
                 return NotFound();
             _context.DeliveryNotes.RemoveRange(deliveryNotes);
             await _context.SaveChangesAsync();

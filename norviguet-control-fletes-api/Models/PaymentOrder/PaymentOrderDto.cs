@@ -4,8 +4,10 @@
     {
         public int Id { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public string PointOfSale { get; set; } = string.Empty;
         public string PaymentOrderNumber { get; set; } = string.Empty;
+
+        // Foreign Keys
         public int InvoiceId { get; set; }
+        public int OrderId { get; set; }
     }
 }

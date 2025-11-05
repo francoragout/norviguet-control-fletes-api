@@ -26,9 +26,10 @@
         public int? CustomerId { get; set; }
 
         // Relationships
-        public Seller? Seller { get; set; }
-        public Customer? Customer { get; set; }
-        public Invoice? Invoice { get; set; }
+        public required Seller Seller { get; set; }
+        public required Customer Customer { get; set; }
         public ICollection<DeliveryNote> DeliveryNotes { get; set; } = new List<DeliveryNote>();
+        public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
+        public ICollection<PaymentOrder> PaymentOrders { get; set; } = new List<PaymentOrder>();
     }
 }

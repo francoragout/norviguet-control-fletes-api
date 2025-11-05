@@ -31,8 +31,8 @@ namespace norviguet_control_fletes_api.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CUIT = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     BusinessName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CUIT = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
@@ -80,8 +80,8 @@ namespace norviguet_control_fletes_api.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Incoterm = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Price = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
+                    OrderNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Incoterm = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     SellerId = table.Column<int>(type: "int", nullable: true),
                     CustomerId = table.Column<int>(type: "int", nullable: true)
                 },
@@ -163,8 +163,8 @@ namespace norviguet_control_fletes_api.Migrations
                     DeliveryNoteNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Address = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Location = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    OrderId = table.Column<int>(type: "int", nullable: false),
-                    CarrierId = table.Column<int>(type: "int", nullable: true)
+                    CarrierId = table.Column<int>(type: "int", nullable: false),
+                    OrderId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -174,7 +174,7 @@ namespace norviguet_control_fletes_api.Migrations
                         column: x => x.CarrierId,
                         principalTable: "Carriers",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_DeliveryNotes_Orders_OrderId",
                         column: x => x.OrderId,
@@ -191,13 +191,20 @@ namespace norviguet_control_fletes_api.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Type = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PointOfSale = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     InvoiceNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Price = table.Column<int>(type: "int", precision: 18, scale: 2, nullable: false),
+                    CarrierId = table.Column<int>(type: "int", nullable: false),
                     OrderId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Invoices", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Invoices_Carriers_CarrierId",
+                        column: x => x.CarrierId,
+                        principalTable: "Carriers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Invoices_Orders_OrderId",
                         column: x => x.OrderId,
@@ -207,15 +214,39 @@ namespace norviguet_control_fletes_api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "DeliveryNoteInvoice",
+                columns: table => new
+                {
+                    DeliveryNotesId = table.Column<int>(type: "int", nullable: false),
+                    InvoicesId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DeliveryNoteInvoice", x => new { x.DeliveryNotesId, x.InvoicesId });
+                    table.ForeignKey(
+                        name: "FK_DeliveryNoteInvoice_DeliveryNotes_DeliveryNotesId",
+                        column: x => x.DeliveryNotesId,
+                        principalTable: "DeliveryNotes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_DeliveryNoteInvoice_Invoices_InvoicesId",
+                        column: x => x.InvoicesId,
+                        principalTable: "Invoices",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "PaymentOrders",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    PointOfSale = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Number = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    InvoiceId = table.Column<int>(type: "int", nullable: false)
+                    PaymentOrderNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    InvoiceId = table.Column<int>(type: "int", nullable: false),
+                    OrderId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -226,7 +257,18 @@ namespace norviguet_control_fletes_api.Migrations
                         principalTable: "Invoices",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PaymentOrders_Orders_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "Orders",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DeliveryNoteInvoice_InvoicesId",
+                table: "DeliveryNoteInvoice",
+                column: "InvoicesId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DeliveryNotes_CarrierId",
@@ -239,9 +281,14 @@ namespace norviguet_control_fletes_api.Migrations
                 column: "OrderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Invoices_OrderId",
+                name: "IX_Invoices_CarrierId",
                 table: "Invoices",
-                column: "OrderId",
+                column: "CarrierId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Invoices_OrderId_CarrierId",
+                table: "Invoices",
+                columns: new[] { "OrderId", "CarrierId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -262,7 +309,13 @@ namespace norviguet_control_fletes_api.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_PaymentOrders_InvoiceId",
                 table: "PaymentOrders",
-                column: "InvoiceId");
+                column: "InvoiceId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PaymentOrders_OrderId",
+                table: "PaymentOrders",
+                column: "OrderId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RefreshTokens_UserId",
@@ -274,7 +327,7 @@ namespace norviguet_control_fletes_api.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "DeliveryNotes");
+                name: "DeliveryNoteInvoice");
 
             migrationBuilder.DropTable(
                 name: "Notifications");
@@ -286,13 +339,16 @@ namespace norviguet_control_fletes_api.Migrations
                 name: "RefreshTokens");
 
             migrationBuilder.DropTable(
-                name: "Carriers");
+                name: "DeliveryNotes");
 
             migrationBuilder.DropTable(
                 name: "Invoices");
 
             migrationBuilder.DropTable(
                 name: "Users");
+
+            migrationBuilder.DropTable(
+                name: "Carriers");
 
             migrationBuilder.DropTable(
                 name: "Orders");

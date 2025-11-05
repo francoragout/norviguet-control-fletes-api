@@ -51,6 +51,7 @@ namespace norviguet_control_fletes_api.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CUIT")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
@@ -74,9 +75,10 @@ namespace norviguet_control_fletes_api.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Address")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("CarrierId")
+                    b.Property<int>("CarrierId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
@@ -84,9 +86,10 @@ namespace norviguet_control_fletes_api.Migrations
 
                     b.Property<string>("DeliveryNoteNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Location")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("OrderId")
@@ -99,6 +102,9 @@ namespace norviguet_control_fletes_api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CarrierId");
+
+                    b.HasIndex("DeliveryNoteNumber")
+                        .IsUnique();
 
                     b.HasIndex("OrderId");
 
@@ -113,21 +119,21 @@ namespace norviguet_control_fletes_api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("CarrierId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("InvoiceNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
 
-                    b.Property<string>("PointOfSale")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("Price")
+                        .HasPrecision(18, 2)
                         .HasColumnType("int");
 
                     b.Property<string>("Type")
@@ -136,7 +142,12 @@ namespace norviguet_control_fletes_api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrderId")
+                    b.HasIndex("CarrierId");
+
+                    b.HasIndex("InvoiceNumber")
+                        .IsUnique();
+
+                    b.HasIndex("OrderId", "CarrierId")
                         .IsUnique();
 
                     b.ToTable("Invoices");
@@ -198,7 +209,7 @@ namespace norviguet_control_fletes_api.Migrations
 
                     b.Property<string>("OrderNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int?>("SellerId")
                         .HasColumnType("int");
@@ -210,6 +221,9 @@ namespace norviguet_control_fletes_api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
+
+                    b.HasIndex("OrderNumber")
+                        .IsUnique();
 
                     b.HasIndex("SellerId");
 
@@ -230,17 +244,21 @@ namespace norviguet_control_fletes_api.Migrations
                     b.Property<int>("InvoiceId")
                         .HasColumnType("int");
 
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
                     b.Property<string>("PaymentOrderNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PointOfSale")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("InvoiceId")
+                        .IsUnique();
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("PaymentOrderNumber")
                         .IsUnique();
 
                     b.ToTable("PaymentOrders");
@@ -346,7 +364,8 @@ namespace norviguet_control_fletes_api.Migrations
                     b.HasOne("norviguet_control_fletes_api.Entities.Carrier", "Carrier")
                         .WithMany("DeliveryNotes")
                         .HasForeignKey("CarrierId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("norviguet_control_fletes_api.Entities.Order", "Order")
                         .WithMany("DeliveryNotes")
@@ -361,11 +380,19 @@ namespace norviguet_control_fletes_api.Migrations
 
             modelBuilder.Entity("norviguet_control_fletes_api.Entities.Invoice", b =>
                 {
-                    b.HasOne("norviguet_control_fletes_api.Entities.Order", "Order")
-                        .WithOne("Invoice")
-                        .HasForeignKey("norviguet_control_fletes_api.Entities.Invoice", "OrderId")
+                    b.HasOne("norviguet_control_fletes_api.Entities.Carrier", "Carrier")
+                        .WithMany("Invoices")
+                        .HasForeignKey("CarrierId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("norviguet_control_fletes_api.Entities.Order", "Order")
+                        .WithMany("Invoices")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Carrier");
 
                     b.Navigation("Order");
                 });
@@ -406,7 +433,15 @@ namespace norviguet_control_fletes_api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("norviguet_control_fletes_api.Entities.Order", "Order")
+                        .WithMany("PaymentOrders")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Invoice");
+
+                    b.Navigation("Order");
                 });
 
             modelBuilder.Entity("norviguet_control_fletes_api.Entities.RefreshToken", b =>
@@ -423,6 +458,8 @@ namespace norviguet_control_fletes_api.Migrations
             modelBuilder.Entity("norviguet_control_fletes_api.Entities.Carrier", b =>
                 {
                     b.Navigation("DeliveryNotes");
+
+                    b.Navigation("Invoices");
                 });
 
             modelBuilder.Entity("norviguet_control_fletes_api.Entities.Customer", b =>
@@ -439,7 +476,9 @@ namespace norviguet_control_fletes_api.Migrations
                 {
                     b.Navigation("DeliveryNotes");
 
-                    b.Navigation("Invoice");
+                    b.Navigation("Invoices");
+
+                    b.Navigation("PaymentOrders");
                 });
 
             modelBuilder.Entity("norviguet_control_fletes_api.Entities.Seller", b =>
