@@ -27,8 +27,8 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<ActionResult<List<InvoiceDto>>> GetInvoicesByOrderId(int orderId)
         {
             var invoices = await _context.Invoices
-                .Include(i => i.Carrier)
                 .Where(i => i.OrderId == orderId)
+                .Include(i => i.Carrier)
                 .ToListAsync();
             var result = _mapper.Map<List<InvoiceDto>>(invoices);
             return Ok(result);

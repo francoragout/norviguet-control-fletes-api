@@ -66,22 +66,23 @@ namespace norviguet_control_fletes_api.Controllers
 
             var order = _mapper.Map<Order>(dto);
             _context.Orders.Add(order);
+            await _context.SaveChangesAsync(); // Guardar la orden antes de crear notificaciones
 
             var usersToNotify = await _context.Users
                 .Where(u => u.Role != UserRole.Pending)
                 .ToListAsync();
 
-            var notificationTasks = usersToNotify.Select(user =>
-                _notificationService.CreateNotificationAsync(new CreateNotificationDto
+            // Crear notificaciones de forma secuencial para evitar concurrencia en DbContext
+            foreach (var user in usersToNotify)
+            {
+                await _notificationService.CreateNotificationAsync(new CreateNotificationDto
                 {
                     UserId = user.Id,
                     Title = "Nuevo Pedido",
                     Message = $"Se ha creado un nuevo pedido (ID: {order.Id}).",
                     Link = $"/dashboard/orders/{order.Id}/update"
-                })
-            );
-
-            await Task.WhenAll(notificationTasks);
+                });
+            }
 
             var resultDto = _mapper.Map<OrderDto>(order);
             return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, resultDto);
