@@ -69,9 +69,19 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> DeleteCustomer(int id)
         {
-            var customer = await _context.Customers.FindAsync(id);
+            var customer = await _context.Customers
+                .Include(c => c.Orders)
+                .FirstOrDefaultAsync(c => c.Id == id);
             if (customer == null)
                 return NotFound();
+            if (customer.Orders?.Any() == true)
+            {
+                return Conflict(new
+                {
+                    code = "CANNOT_DELETE_CUSTOMER_WITH_ASSOCIATED_ORDERS",
+                    message = "Customer cannot be deleted because it has associated orders."
+                });
+            }
             _context.Customers.Remove(customer);
             await _context.SaveChangesAsync();
             return NoContent();
@@ -81,11 +91,35 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> DeleteCustomersBulk([FromBody] DeleteEntitiesDto dto)
         {
-            var customers = await _context.Customers.Where(c => dto.Ids.Contains(c.Id)).ToListAsync();
+            var customers = await _context.Customers
+                .Where(c => dto.Ids.Contains(c.Id))
+                .Include(c => c.Orders)
+                .ToListAsync();
+
             if (!customers.Any())
                 return NotFound();
-            _context.Customers.RemoveRange(customers);
-            await _context.SaveChangesAsync();
+
+            var cannotDelete = customers
+                .Where(c => c.Orders?.Any() == true)
+                .ToList();
+
+            var canDelete = customers.Except(cannotDelete).ToList();
+
+            if (canDelete.Any())
+            {
+                _context.Customers.RemoveRange(canDelete);
+                await _context.SaveChangesAsync();
+            }
+
+            if (cannotDelete.Any())
+            {
+                return Conflict(new
+                {
+                    code = "CANNOT_DELETE_CUSTOMERS_WITH_ASSOCIATED_ORDERS",
+                    message = "Some customers could not be deleted because they have associated orders."
+                });
+            }
+
             return NoContent();
         }
     }

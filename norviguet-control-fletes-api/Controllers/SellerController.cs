@@ -67,10 +67,19 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> DeleteSeller(int id)
         {
-            var existingSeller = await _context.Sellers.FindAsync(id);
-            if (existingSeller == null)
+            var seller = await _context.Sellers
+                .Include(s => s.Orders)
+                .FirstOrDefaultAsync(s => s.Id == id);
+            if (seller == null)
                 return NotFound();
-            _context.Sellers.Remove(existingSeller);
+            if (seller.Orders?.Any() == true)
+            {
+                return Conflict(new {
+                    code = "CANNOT_DELETE_SELLER_WITH_ASSOCIATED_ORDERS",
+                    message = "Seller cannot be deleted because it has associated orders."
+                });
+            }
+            _context.Sellers.Remove(seller);
             await _context.SaveChangesAsync();
             return NoContent();
         }
@@ -79,13 +88,28 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> DeleteSellers([FromBody] DeleteEntitiesDto dto)
         {
-            var sellersToDelete = await _context.Sellers
+            var sellers = await _context.Sellers
                 .Where(s => dto.Ids.Contains(s.Id))
+                .Include(s => s.Orders)
                 .ToListAsync();
-            if (sellersToDelete.Count == 0)
+            if (sellers.Count == 0)
                 return NotFound();
-            _context.Sellers.RemoveRange(sellersToDelete);
-            await _context.SaveChangesAsync();
+            var cannotDelete = sellers
+                .Where(s => s.Orders?.Any() == true)
+                .ToList();
+            var canDelete = sellers.Except(cannotDelete).ToList();
+            if (canDelete.Any())
+            {
+                _context.Sellers.RemoveRange(canDelete);
+                await _context.SaveChangesAsync();
+            }
+            if (cannotDelete.Any())
+            {
+                return Conflict(new {
+                    code = "CANNOT_DELETE_SELLERS_WITH_ASSOCIATED_ORDERS",
+                    message = "Some sellers could not be deleted because they have associated orders."
+                });
+            }
             return NoContent();
         }
     }

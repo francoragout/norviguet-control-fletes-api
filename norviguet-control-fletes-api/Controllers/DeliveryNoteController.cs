@@ -54,8 +54,22 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Logistics")]
         public async Task<ActionResult<DeliveryNoteDto>> CreateDeliveryNote(CreateDeliveryNoteDto dto)
         {
+            var order = await _context.Orders.FindAsync(dto.OrderId);
+            if (order == null)
+                return NotFound();
+
+            if (order.Status == OrderStatus.Closed || order.Status == OrderStatus.Rejected)
+                return Conflict(new {
+                    code = "CANNOT_CREATE_DELIVERY_NOTE_FOR_CLOSED_OR_REJECTED_ORDER",
+                    message = "No se puede crear un remito para una orden cerrada o rechazada."
+                });
+
             if (await _context.DeliveryNotes.AnyAsync(dn => dn.DeliveryNoteNumber == dto.DeliveryNoteNumber))
-                return Conflict(new { message = "Delivery note number already exists." });
+                return Conflict(new
+                {
+                    code = "DELIVERY_NOTE_NUMBER_ALREADY_EXISTS",
+                    message = "Delivery note number already exists."
+                });
 
             var deliveryNote = _mapper.Map<DeliveryNote>(dto);
             _context.DeliveryNotes.Add(deliveryNote);
@@ -85,18 +99,34 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> UpdateDeliveryNote(int id, [FromBody] UpdateDeliveryNoteDto dto)
         {
-            if (await _context.DeliveryNotes.AnyAsync(dn => dn.DeliveryNoteNumber == dto.DeliveryNoteNumber && dn.Id != id))
-                return Conflict(new { message = "Delivery note number already exists." });
+            var deliveryNote = await _context.DeliveryNotes
+                .Include(dn => dn.Order)
+                .FirstOrDefaultAsync(dn => dn.Id == id);
 
-            var deliveryNote = await _context.DeliveryNotes.FindAsync(id);
             if (deliveryNote == null)
                 return NotFound();
+
+            if (deliveryNote.Order.Status == OrderStatus.Closed || deliveryNote.Order.Status == OrderStatus.Rejected)
+            {
+                return Conflict(new
+                {
+                    code = "CANNOT_EDIT_CLOSED_OR_REJECTED_ORDER_DELIVERY_NOTE",
+                    message = "Cannot edit delivery note from a closed or rejected order."
+                });
+            }
 
             if (deliveryNote.Status == DeliveryNoteStatus.Cancelled || deliveryNote.Status == DeliveryNoteStatus.Approved)
                 return BadRequest(new
                 {
-                    code = "DELIVERY_NOTE_CANCELLED_OR_APPROVED",
+                    code = "CANNOT_UPDATE_CANCELLED_OR_APPROVED_DELIVERY_NOTE",
                     message = "Cannot update a cancelled or approved delivery note."
+                });
+
+            if (await _context.DeliveryNotes.AnyAsync(dn => dn.DeliveryNoteNumber == dto.DeliveryNoteNumber && dn.Id != id))
+                return Conflict(new
+                {
+                    code = "DELIVERY_NOTE_NUMBER_ALREADY_EXISTS",
+                    message = "Delivery note number already exists."
                 });
 
             _mapper.Map(dto, deliveryNote);
@@ -109,6 +139,7 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<IActionResult> UpdateDeliveryNoteStatus(int id, [FromBody] UpdateDeliveryNoteStatusDto dto)
         {
             var deliveryNote = await _context.DeliveryNotes.FindAsync(id);
+
             if (deliveryNote == null)
                 return NotFound();
 
@@ -118,14 +149,27 @@ namespace norviguet_control_fletes_api.Controllers
             return NoContent();
         }
 
-
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteDeliveryNote(int id)
         {
-            var deliveryNote = await _context.DeliveryNotes.FindAsync(id);
+            var deliveryNote = await _context.DeliveryNotes
+                .Include(dn => dn.Order)
+                .FirstOrDefaultAsync(dn => dn.Id == id);
+
             if (deliveryNote == null)
                 return NotFound();
+
+            
+
+            if (deliveryNote.Order.Status == OrderStatus.Closed)
+            {
+                return Conflict(new
+                {
+                    code = "CANNOT_DELETE_CLOSED_ORDER_DELIVERY_NOTE",
+                    message = "Cannot delete delivery note from a closed order."
+                });
+            }
             _context.DeliveryNotes.Remove(deliveryNote);
             await _context.SaveChangesAsync();
             return NoContent();
@@ -137,9 +181,20 @@ namespace norviguet_control_fletes_api.Controllers
         {
             var deliveryNotes = await _context.DeliveryNotes
                 .Where(dn => dto.Ids.Contains(dn.Id))
+                .Include(dn => dn.Order)
                 .ToListAsync();
             if (deliveryNotes.Count == 0)
                 return NotFound();
+
+            if (deliveryNotes.Any(dn => dn.Order.Status == OrderStatus.Closed))
+            {
+                return Conflict(new
+                {
+                    code = "CANNOT_DELETE_CLOSED_ORDER_DELIVERY_NOTES",
+                    message = "Cannot delete delivery notes because at least one is associated with a closed order."
+                });
+            }
+
             _context.DeliveryNotes.RemoveRange(deliveryNotes);
             await _context.SaveChangesAsync();
             return NoContent();

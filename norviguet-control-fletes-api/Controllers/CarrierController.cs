@@ -68,9 +68,25 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> DeleteCarrier(int id)
         {
-            var carrier = await _context.Carriers.FindAsync(id);
+            var carrier = await _context.Carriers
+                .Include(c => c.DeliveryNotes)
+                .Include(c => c.PaymentOrders)
+                .Include(c => c.Invoices)
+                .FirstOrDefaultAsync(c => c.Id == id);
             if (carrier == null)
                 return NotFound();
+
+            if ((carrier.DeliveryNotes?.Any() == true) ||
+                (carrier.PaymentOrders?.Any() == true) ||
+                (carrier.Invoices?.Any() == true))
+            {
+                return Conflict(new 
+                {
+                    code = "CANNOT_DELETE_CARRIER_WITH_ASSOCIATED_RECORDS",
+                    message = "Carrier cannot be deleted because it has associated delivery notes, payment orders, or invoices."
+                });
+            }
+
             _context.Carriers.Remove(carrier);
             await _context.SaveChangesAsync();
             return NoContent();
@@ -80,11 +96,39 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> DeleteCarriersBulk([FromBody] DeleteEntitiesDto dto)
         {
-            var carriers = await _context.Carriers.Where(c => dto.Ids.Contains(c.Id)).ToListAsync();
+            var carriers = await _context.Carriers
+                .Where(c => dto.Ids.Contains(c.Id))
+                .Include(c => c.DeliveryNotes)
+                .Include(c => c.PaymentOrders)
+                .Include(c => c.Invoices)
+                .ToListAsync();
+
             if (carriers.Count == 0)
                 return NotFound();
-            _context.Carriers.RemoveRange(carriers);
-            await _context.SaveChangesAsync();
+
+            var cannotDelete = carriers
+                .Where(c => (c.DeliveryNotes?.Any() == true) ||
+                             (c.PaymentOrders?.Any() == true) ||
+                             (c.Invoices?.Any() == true))
+                .ToList();
+
+            var canDelete = carriers.Except(cannotDelete).ToList();
+
+            if (canDelete.Any())
+            {
+                _context.Carriers.RemoveRange(canDelete);
+                await _context.SaveChangesAsync();
+            }
+
+            if (cannotDelete.Any())
+            {
+                return Conflict(new
+                {
+                    code = "CANNOT_DELETE_CARRIERS_WITH_ASSOCIATED_RECORDS",
+                    message = "Some carriers could not be deleted because they have associated delivery notes, payment orders, or invoices.",
+                });
+            }
+
             return NoContent();
         }
 

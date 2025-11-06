@@ -63,17 +63,20 @@ namespace norviguet_control_fletes_api.Controllers
         public async Task<ActionResult<OrderDto>> CreateOrder([FromBody] CreateOrderDto dto)
         {
             if (await _context.Orders.AnyAsync(o => o.OrderNumber == dto.OrderNumber))
-                return Conflict(new { message = "Order number already exists." });
+                return Conflict(new
+                {
+                    code = "ORDER_NUMBER_ALREADY_EXISTS",
+                    message = "Order number already exists."
+                });
 
             var order = _mapper.Map<Order>(dto);
             _context.Orders.Add(order);
-            await _context.SaveChangesAsync(); // Guardar la orden antes de crear notificaciones
+            await _context.SaveChangesAsync();
 
             var usersToNotify = await _context.Users
                 .Where(u => u.Role != UserRole.Pending)
                 .ToListAsync();
 
-            // Crear notificaciones de forma secuencial para evitar concurrencia en DbContext
             foreach (var user in usersToNotify)
             {
                 await _notificationService.CreateNotificationAsync(new CreateNotificationDto
@@ -94,20 +97,24 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> UpdateOrder(int id, [FromBody] UpdateOrderDto dto)
         {
-            if (await _context.Orders.AnyAsync(o => o.OrderNumber == dto.OrderNumber && o.Id != id))
-                return Conflict(new { message = "Order number already exists." });
-
             var order = await _context.Orders.FindAsync(id);
+
             if (order == null)
                 return NotFound();
 
             if (order.Status == OrderStatus.Closed || order.Status == OrderStatus.Rejected)
                 return BadRequest(new
                 {
-                    code = "ORDER_CLOSED_OR_REJECTED",
+                    code = "CANNOT_EDIT_CLOSED_OR_REJECTED_ORDER",
                     message = "Cannot update a closed or rejected order."
                 });
 
+            if (await _context.Orders.AnyAsync(o => o.OrderNumber == dto.OrderNumber && o.Id != id))
+                return Conflict(new
+                {
+                    code = "ORDER_NUMBER_ALREADY_EXISTS",
+                    message = "Order number already exists."
+                });
 
             _mapper.Map(dto, order);
             await _context.SaveChangesAsync();
@@ -136,6 +143,14 @@ namespace norviguet_control_fletes_api.Controllers
             var order = await _context.Orders.FindAsync(id);
             if (order == null)
                 return NotFound();
+
+            if (order.Status == OrderStatus.Closed)
+                return BadRequest(new
+                {
+                    code = "CANNOT_DELETE_CLOSED_ORDER",
+                    message = "Cannot delete a closed order."
+                });
+
             _context.Orders.Remove(order);
             await _context.SaveChangesAsync();
             return NoContent();
@@ -150,8 +165,22 @@ namespace norviguet_control_fletes_api.Controllers
                 .ToListAsync();
             if (orders.Count == 0)
                 return NotFound();
-            _context.Orders.RemoveRange(orders);
-            await _context.SaveChangesAsync();
+
+            if (orders.Any(o => o.Status == OrderStatus.Closed))
+            {
+                return BadRequest(new
+                {
+                    code = "CANNOT_DELETE_CLOSED_ORDERS",
+                    message = "Cannot delete orders that are closed."
+                });
+            }
+
+            var ordersToDelete = orders.Where(o => o.Status == OrderStatus.Rejected || o.Status == OrderStatus.Pending).ToList();
+            if (ordersToDelete.Count > 0)
+            {
+                _context.Orders.RemoveRange(ordersToDelete);
+                await _context.SaveChangesAsync();
+            }
             return NoContent();
         }
     }
