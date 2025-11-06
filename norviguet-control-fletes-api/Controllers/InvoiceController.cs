@@ -86,7 +86,7 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Purchasing")]
         public async Task<IActionResult> UpdateInvoice(int id, [FromBody] UpdateInvoiceDto dto)
         {
-            if (await _context.Invoices.AnyAsync(i => i.InvoiceNumber == dto.InvoiceNumber))
+            if (await _context.Invoices.AnyAsync(i => i.InvoiceNumber == dto.InvoiceNumber && i.Id != id))
                 return Conflict(new
                 {
                     code = "INVOICE_NUMBER_ALREADY_EXISTS",

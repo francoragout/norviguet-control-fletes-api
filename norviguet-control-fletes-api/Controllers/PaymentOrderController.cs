@@ -55,8 +55,15 @@ namespace norviguet_control_fletes_api.Controllers
             if (await _context.PaymentOrders.AnyAsync(po => po.PaymentOrderNumber == dto.PaymentOrderNumber))
                 return Conflict(new
                 {
-                    code = "PATMENT_ORDER_NUMBER_ALREADY_EXISTS",
+                    code = "PAYMENT_ORDER_NUMBER_ALREADY_EXISTS",
                     message = "Payment order number already exists."
+                });
+            
+            if (await _context.PaymentOrders.AnyAsync(po => po.CarrierId == dto.CarrierId && po.OrderId == dto.OrderId))
+                return Conflict(new
+                {
+                    code = "PAYMENT_ORDER_CARRIER_ORDER_ALREADY_EXISTS",
+                    message = "A payment order for this carrier and order already exists."
                 });
 
             var paymentOrder = _mapper.Map<PaymentOrder>(dto);
@@ -69,7 +76,7 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Payments")]
         public async Task<IActionResult> UpdatePaymentOrder(int id, [FromBody] UpdatePaymentOrderDto dto)
         {
-            if (await _context.PaymentOrders.AnyAsync(po => po.PaymentOrderNumber == dto.PaymentOrderNumber))
+            if (await _context.PaymentOrders.AnyAsync(po => po.PaymentOrderNumber == dto.PaymentOrderNumber && po.Id != id))
                 return Conflict(new
                 {
                     code = "PATMENT_ORDER_NUMBER_ALREADY_EXISTS",

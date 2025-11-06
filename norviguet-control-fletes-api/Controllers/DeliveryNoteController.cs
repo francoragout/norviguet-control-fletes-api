@@ -85,9 +85,19 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> UpdateDeliveryNote(int id, [FromBody] UpdateDeliveryNoteDto dto)
         {
+            if (await _context.DeliveryNotes.AnyAsync(dn => dn.DeliveryNoteNumber == dto.DeliveryNoteNumber && dn.Id != id))
+                return Conflict(new { message = "Delivery note number already exists." });
+
             var deliveryNote = await _context.DeliveryNotes.FindAsync(id);
             if (deliveryNote == null)
                 return NotFound();
+
+            if (deliveryNote.Status == DeliveryNoteStatus.Cancelled || deliveryNote.Status == DeliveryNoteStatus.Approved)
+                return BadRequest(new
+                {
+                    code = "DELIVERY_NOTE_CANCELLED_OR_APPROVED",
+                    message = "Cannot update a cancelled or approved delivery note."
+                });
 
             _mapper.Map(dto, deliveryNote);
             await _context.SaveChangesAsync();

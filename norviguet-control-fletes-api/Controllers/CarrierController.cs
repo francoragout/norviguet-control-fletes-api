@@ -87,5 +87,32 @@ namespace norviguet_control_fletes_api.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
+
+        [HttpGet("by-order/{orderId}/with-delivery-notes")]
+        [Authorize(Roles = "Admin, Purchasing")]
+        public async Task<ActionResult<List<CarrierDto>>> GetCarriersWithDeliveryNotesByOrder(int orderId)
+        {
+            var carriers = await _context.DeliveryNotes
+                .Where(dn => dn.OrderId == orderId)
+                .Select(dn => dn.Carrier)
+                .Distinct()
+                .ToListAsync();
+
+            var result = _mapper.Map<List<CarrierDto>>(carriers);
+            return Ok(result);
+        }
+
+        [HttpGet("by-order/{orderId}/with-invoices")]
+        [Authorize(Roles = "Admin, Payments")]
+        public async Task<ActionResult<List<CarrierDto>>> GetCarriersWithInvoicesByOrder(int orderId)
+        {
+            var carriers = await _context.Invoices
+                .Where(i => i.OrderId == orderId)
+                .Select(i => i.Carrier)
+                .Distinct()
+                .ToListAsync();
+            var result = _mapper.Map<List<CarrierDto>>(carriers);
+            return Ok(result);
+        }
     }
 }

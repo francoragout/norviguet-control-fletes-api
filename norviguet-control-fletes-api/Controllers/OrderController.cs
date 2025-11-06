@@ -91,17 +91,23 @@ namespace norviguet_control_fletes_api.Controllers
 
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> UpdateOrder(int id, [FromBody] UpdateOrderDto dto)
         {
-            if (await _context.Orders.AnyAsync(o => o.OrderNumber == dto.OrderNumber))
+            if (await _context.Orders.AnyAsync(o => o.OrderNumber == dto.OrderNumber && o.Id != id))
                 return Conflict(new { message = "Order number already exists." });
 
             var order = await _context.Orders.FindAsync(id);
             if (order == null)
                 return NotFound();
 
-            if (await _context.Orders.AnyAsync(o => o.OrderNumber == dto.OrderNumber && o.Id != id))
-                return Conflict(new { message = "Order number already exists." });
+            if (order.Status == OrderStatus.Closed || order.Status == OrderStatus.Rejected)
+                return BadRequest(new
+                {
+                    code = "ORDER_CLOSED_OR_REJECTED",
+                    message = "Cannot update a closed or rejected order."
+                });
+
 
             _mapper.Map(dto, order);
             await _context.SaveChangesAsync();
