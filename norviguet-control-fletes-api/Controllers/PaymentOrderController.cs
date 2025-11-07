@@ -30,6 +30,7 @@ namespace norviguet_control_fletes_api.Controllers
             var paymentOrders = await _context.PaymentOrders
                 .Where(po => po.OrderId == orderId)
                 .Include(po => po.Carrier)
+                .Include(po => po.Order)
                 .ToListAsync();
             var result = _mapper.Map<List<PaymentOrderDto>>(paymentOrders);
             return Ok(result);

@@ -29,6 +29,7 @@ namespace norviguet_control_fletes_api.Controllers
             var invoices = await _context.Invoices
                 .Where(i => i.OrderId == orderId)
                 .Include(i => i.Carrier)
+                .Include(i => i.Order)
                 .ToListAsync();
             var result = _mapper.Map<List<InvoiceDto>>(invoices);
             return Ok(result);

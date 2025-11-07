@@ -15,5 +15,6 @@ namespace norviguet_control_fletes_api.Models.Payment
 
         // Additional related data
         public string CarrierName { get; set; } = string.Empty;
+        public string OrderStatus { get; set; } = string.Empty;
     }
 }

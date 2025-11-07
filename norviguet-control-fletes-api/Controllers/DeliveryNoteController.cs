@@ -32,6 +32,7 @@ namespace norviguet_control_fletes_api.Controllers
         {
             var deliveryNotes = await _context.DeliveryNotes
                 .Where(dn => dn.OrderId == orderId)
+                .Include(dn => dn.Order)
                 .Include(dn => dn.Carrier)
                 .ToListAsync();
             var result = _mapper.Map<List<DeliveryNoteDto>>(deliveryNotes);
@@ -61,7 +62,7 @@ namespace norviguet_control_fletes_api.Controllers
             if (order.Status == OrderStatus.Closed || order.Status == OrderStatus.Rejected)
                 return Conflict(new {
                     code = "CANNOT_CREATE_DELIVERY_NOTE_FOR_CLOSED_OR_REJECTED_ORDER",
-                    message = "No se puede crear un remito para una orden cerrada o rechazada."
+                    message = "Cannot create delivery note for a closed or rejected order."
                 });
 
             if (await _context.DeliveryNotes.AnyAsync(dn => dn.DeliveryNoteNumber == dto.DeliveryNoteNumber))
@@ -160,7 +161,14 @@ namespace norviguet_control_fletes_api.Controllers
             if (deliveryNote == null)
                 return NotFound();
 
-            
+            if (deliveryNote.Status == DeliveryNoteStatus.Approved || deliveryNote.Status == DeliveryNoteStatus.Cancelled)
+            {
+                return Conflict(new
+                {
+                    code = "CANNOT_DELETE_APPROVED_OR_CANCELLED_DELIVERY_NOTE",
+                    message = "Cannot delete an approved or cancelled delivery note."
+                });
+            }
 
             if (deliveryNote.Order.Status == OrderStatus.Closed)
             {
@@ -192,6 +200,15 @@ namespace norviguet_control_fletes_api.Controllers
                 {
                     code = "CANNOT_DELETE_CLOSED_ORDER_DELIVERY_NOTES",
                     message = "Cannot delete delivery notes because at least one is associated with a closed order."
+                });
+            }
+
+            if (deliveryNotes.Any(dn => dn.Status == DeliveryNoteStatus.Approved || dn.Status == DeliveryNoteStatus.Cancelled))
+            {
+                return Conflict(new
+                {
+                    code = "CANNOT_DELETE_APPROVED_OR_CANCELLED_DELIVERY_NOTES",
+                    message = "Cannot delete delivery notes because at least one is approved or cancelled."
                 });
             }
 
