@@ -102,19 +102,20 @@ namespace norviguet_control_fletes_api.Controllers
             if (order == null)
                 return NotFound();
 
-            if (order.Status == OrderStatus.Closed || order.Status == OrderStatus.Rejected)
-                return BadRequest(new
-                {
-                    code = "CANNOT_EDIT_CLOSED_OR_REJECTED_ORDER",
-                    message = "Cannot update a closed or rejected order."
-                });
-
             if (await _context.Orders.AnyAsync(o => o.OrderNumber == dto.OrderNumber && o.Id != id))
                 return Conflict(new
                 {
                     code = "ORDER_NUMBER_ALREADY_EXISTS",
                     message = "Order number already exists."
                 });
+
+            if (order.Status == OrderStatus.Closed || order.Status == OrderStatus.Rejected)
+                return BadRequest(new
+                {
+                    code = "CLOSED_OR_REJECTED_ORDER",
+                    message = "Cannot update a closed or rejected order."
+                });
+
 
             _mapper.Map(dto, order);
             await _context.SaveChangesAsync();
@@ -147,7 +148,7 @@ namespace norviguet_control_fletes_api.Controllers
             if (order.Status == OrderStatus.Closed)
                 return BadRequest(new
                 {
-                    code = "CANNOT_DELETE_CLOSED_ORDER",
+                    code = "CLOSED_OR_REJECTED_ORDER",
                     message = "Cannot delete a closed order."
                 });
 
@@ -170,7 +171,7 @@ namespace norviguet_control_fletes_api.Controllers
             {
                 return BadRequest(new
                 {
-                    code = "CANNOT_DELETE_CLOSED_ORDERS",
+                    code = "CLOSED_OR_REJECTED_ORDER",
                     message = "Cannot delete orders that are closed."
                 });
             }

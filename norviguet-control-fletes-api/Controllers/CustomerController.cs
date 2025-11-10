@@ -78,7 +78,7 @@ namespace norviguet_control_fletes_api.Controllers
             {
                 return Conflict(new
                 {
-                    code = "CANNOT_DELETE_CUSTOMER_WITH_ASSOCIATED_ORDERS",
+                    code = "ASSOCIATED_RECORDS",
                     message = "Customer cannot be deleted because it has associated orders."
                 });
             }
@@ -115,7 +115,7 @@ namespace norviguet_control_fletes_api.Controllers
             {
                 return Conflict(new
                 {
-                    code = "CANNOT_DELETE_CUSTOMERS_WITH_ASSOCIATED_ORDERS",
+                    code = "ASSOCIATED_RECORDS",
                     message = "Some customers could not be deleted because they have associated orders."
                 });
             }

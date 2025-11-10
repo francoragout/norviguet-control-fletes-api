@@ -59,9 +59,10 @@ namespace norviguet_control_fletes_api.Controllers
             if (order == null)
                 return NotFound();
 
-            if (order.Status == OrderStatus.Closed || order.Status == OrderStatus.Rejected)
-                return Conflict(new {
-                    code = "CANNOT_CREATE_DELIVERY_NOTE_FOR_CLOSED_OR_REJECTED_ORDER",
+            if (order.Status != OrderStatus.Pending)
+                return Conflict(new
+                {
+                    code = "CLOSED_OR_REJECTED_ORDER",
                     message = "Cannot create delivery note for a closed or rejected order."
                 });
 
@@ -107,19 +108,19 @@ namespace norviguet_control_fletes_api.Controllers
             if (deliveryNote == null)
                 return NotFound();
 
-            if (deliveryNote.Order.Status == OrderStatus.Closed || deliveryNote.Order.Status == OrderStatus.Rejected)
+            if (deliveryNote.Order.Status != OrderStatus.Pending)
             {
                 return Conflict(new
                 {
-                    code = "CANNOT_EDIT_CLOSED_OR_REJECTED_ORDER_DELIVERY_NOTE",
+                    code = "CLOSED_OR_REJECTED_ORDER",
                     message = "Cannot edit delivery note from a closed or rejected order."
                 });
             }
 
-            if (deliveryNote.Status == DeliveryNoteStatus.Cancelled || deliveryNote.Status == DeliveryNoteStatus.Approved)
+            if (deliveryNote.Status != DeliveryNoteStatus.Pending)
                 return BadRequest(new
                 {
-                    code = "CANNOT_UPDATE_CANCELLED_OR_APPROVED_DELIVERY_NOTE",
+                    code = "APPROVED_OR_CANCELLED_DELIVERY_NOTE",
                     message = "Cannot update a cancelled or approved delivery note."
                 });
 
@@ -161,23 +162,16 @@ namespace norviguet_control_fletes_api.Controllers
             if (deliveryNote == null)
                 return NotFound();
 
-            if (deliveryNote.Status == DeliveryNoteStatus.Approved || deliveryNote.Status == DeliveryNoteStatus.Cancelled)
+            // Solo se puede eliminar si el remito y la orden están en estado Pending
+            if (deliveryNote.Status != DeliveryNoteStatus.Pending || deliveryNote.Order.Status != OrderStatus.Pending)
             {
                 return Conflict(new
                 {
-                    code = "CANNOT_DELETE_APPROVED_OR_CANCELLED_DELIVERY_NOTE",
-                    message = "Cannot delete an approved or cancelled delivery note."
+                    code = "APPROVED_OR_REJECTED_DELIVERY_NOTE_CLOSED_OR_REJECTED_ORDER",
+                    message = "Only delivery notes with Pending status and related to orders with Pending status can be deleted."
                 });
             }
 
-            if (deliveryNote.Order.Status == OrderStatus.Closed)
-            {
-                return Conflict(new
-                {
-                    code = "CANNOT_DELETE_CLOSED_ORDER_DELIVERY_NOTE",
-                    message = "Cannot delete delivery note from a closed order."
-                });
-            }
             _context.DeliveryNotes.Remove(deliveryNote);
             await _context.SaveChangesAsync();
             return NoContent();
@@ -191,28 +185,31 @@ namespace norviguet_control_fletes_api.Controllers
                 .Where(dn => dto.Ids.Contains(dn.Id))
                 .Include(dn => dn.Order)
                 .ToListAsync();
+
             if (deliveryNotes.Count == 0)
                 return NotFound();
 
-            if (deliveryNotes.Any(dn => dn.Order.Status == OrderStatus.Closed))
+            // Filtrar los que se pueden eliminar: pendientes y orden pendiente
+            var notesToDelete = deliveryNotes
+                .Where(dn => dn.Status == DeliveryNoteStatus.Pending && dn.Order.Status == OrderStatus.Pending)
+                .ToList();
+
+            // Si hay remitos que no cumplen la condición, lanzar error pero eliminar los válidos
+            if (notesToDelete.Count < deliveryNotes.Count)
             {
+                if (notesToDelete.Count > 0)
+                {
+                    _context.DeliveryNotes.RemoveRange(notesToDelete);
+                    await _context.SaveChangesAsync();
+                }
                 return Conflict(new
                 {
-                    code = "CANNOT_DELETE_CLOSED_ORDER_DELIVERY_NOTES",
-                    message = "Cannot delete delivery notes because at least one is associated with a closed order."
+                    code = "APPROVED_OR_REJECTED_DELIVERY_NOTE_CLOSED_OR_REJECTED_ORDER",
+                    message = "Only delivery notes with Pending status and related to orders with Pending status can be deleted. Others were not deleted."
                 });
             }
 
-            if (deliveryNotes.Any(dn => dn.Status == DeliveryNoteStatus.Approved || dn.Status == DeliveryNoteStatus.Cancelled))
-            {
-                return Conflict(new
-                {
-                    code = "CANNOT_DELETE_APPROVED_OR_CANCELLED_DELIVERY_NOTES",
-                    message = "Cannot delete delivery notes because at least one is approved or cancelled."
-                });
-            }
-
-            _context.DeliveryNotes.RemoveRange(deliveryNotes);
+            _context.DeliveryNotes.RemoveRange(notesToDelete);
             await _context.SaveChangesAsync();
             return NoContent();
         }

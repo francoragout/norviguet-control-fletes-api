@@ -75,7 +75,7 @@ namespace norviguet_control_fletes_api.Controllers
             if (seller.Orders?.Any() == true)
             {
                 return Conflict(new {
-                    code = "CANNOT_DELETE_SELLER_WITH_ASSOCIATED_ORDERS",
+                    code = "ASSOCIATED_RECORDS",
                     message = "Seller cannot be deleted because it has associated orders."
                 });
             }
@@ -106,7 +106,7 @@ namespace norviguet_control_fletes_api.Controllers
             if (cannotDelete.Any())
             {
                 return Conflict(new {
-                    code = "CANNOT_DELETE_SELLERS_WITH_ASSOCIATED_ORDERS",
+                    code = "ASSOCIATED_RECORDS",
                     message = "Some sellers could not be deleted because they have associated orders."
                 });
             }

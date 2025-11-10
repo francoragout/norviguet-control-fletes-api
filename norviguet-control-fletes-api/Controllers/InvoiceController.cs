@@ -56,10 +56,10 @@ namespace norviguet_control_fletes_api.Controllers
             if (order == null)
                 return NotFound();
 
-            if (order.Status == OrderStatus.Closed || order.Status == OrderStatus.Rejected)
+            if (order.Status != OrderStatus.Pending)
                 return Conflict(new
                 {
-                    code = "CANNOT_CREATE_INVOICE_FOR_CLOSED_OR_REJECTED_ORDER",
+                    code = "CLOSED_OR_REJECTED_ORDER",
                     message = "Cannot create an invoice for a closed or rejected order."
                 });
 
@@ -132,12 +132,12 @@ namespace norviguet_control_fletes_api.Controllers
             if (existingInvoice == null)
                 return NotFound();
 
-            if (existingInvoice.Order.Status == OrderStatus.Closed)
+            if (existingInvoice.Order.Status != OrderStatus.Pending)
             {
                 return Conflict(new
                 {
-                    code = "CANNOT_EDIT_CLOSED_ORDER_INVOICE",
-                    message = "Cannot edit invoice from a closed order."
+                    code = "CLOSED_OR_REJECTED_ORDER",
+                    message = "Cannot edit invoice from a closed or rejected order."
                 });
             }
 
@@ -155,11 +155,12 @@ namespace norviguet_control_fletes_api.Controllers
                 .FirstOrDefaultAsync(i => i.Id == id);
             if (invoice == null)
                 return NotFound();
-            if (invoice.Order.Status == OrderStatus.Closed)
+
+            if (invoice.Order.Status != OrderStatus.Pending)
             {
                 return Conflict(new
                 {
-                    code = "CANNOT_DELETE_CLOSED_ORDER_INVOICE",
+                    code = "CLOSED_OR_REJECTED_ORDER",
                     message = "Cannot delete invoice from a closed order."
                 });
             }
@@ -176,14 +177,15 @@ namespace norviguet_control_fletes_api.Controllers
                 .Where(i => dto.Ids.Contains(i.Id))
                 .Include(i => i.Order)
                 .ToListAsync();
+
             if (invoices.Count == 0)
                 return NotFound();
 
-            if (invoices.Any(i => i.Order.Status == OrderStatus.Closed))
+            if (invoices.Any(i => i.Order.Status == OrderStatus.Closed || i.Order.Status == OrderStatus.Rejected))
             {
                 return Conflict(new
                 {
-                    code = "CANNOT_DELETE_CLOSED_ORDER_INVOICES",
+                    code = "CLOSED_OR_REJECTED_ORDER",
                     message = "Cannot delete invoices because at least one is associated with a closed order."
                 });
             }

@@ -57,11 +57,11 @@ namespace norviguet_control_fletes_api.Controllers
             if (order == null)
                 return NotFound();
 
-            if (order.Status == OrderStatus.Closed || order.Status == OrderStatus.Rejected)
+            if (order.Status != OrderStatus.Pending)
                 return Conflict(new
                 {
-                    code = "CANNOT_CREATE_PAYMENT_ORDER_FOR_CLOSED_OR_REJECTED_ORDER",
-                    message = "No se puede crear una orden de pago para una orden cerrada o rechazada."
+                    code = "CLOSED_OR_REJECTED_ORDER",
+                    message = "Cannot create a payment order for a closed or rejected order."
                 });
 
             if (await _context.PaymentOrders.AnyAsync(po => po.PaymentOrderNumber == dto.PaymentOrderNumber))
@@ -108,11 +108,11 @@ namespace norviguet_control_fletes_api.Controllers
             if (existingPaymentOrder == null)
                 return NotFound();
 
-            if (existingPaymentOrder.Order.Status == OrderStatus.Closed || existingPaymentOrder.Order.Status == OrderStatus.Rejected)
+            if (existingPaymentOrder.Order.Status != OrderStatus.Pending)
             {
                 return Conflict(new
                 {
-                    code = "CANNOT_EDIT_CLOSED_OR_REJECTED_ORDER_PAYMENT_ORDER",
+                    code = "CLOSED_OR_REJECTED_ORDER",
                     message = "Cannot update payment order from a closed or rejected order."
                 });
             }
@@ -129,16 +129,19 @@ namespace norviguet_control_fletes_api.Controllers
             var paymentOrder = await _context.PaymentOrders
                 .Include(po => po.Order)
                 .FirstOrDefaultAsync(po => po.Id == id);
+
             if (paymentOrder == null)
                 return NotFound();
-            if (paymentOrder.Order.Status == OrderStatus.Closed)
+
+            if (paymentOrder.Order.Status != OrderStatus.Pending)
             {
                 return Conflict(new
                 {
-                    code = "CANNOT_DELETE_CLOSED_ORDER_PAYMENT_ORDER",
+                    code = "CLOSED_OR_REJECTED_ORDER",
                     message = "Cannot delete payment order from a closed order."
                 });
             }
+
             _context.PaymentOrders.Remove(paymentOrder);
             await _context.SaveChangesAsync();
             return NoContent();
@@ -155,11 +158,11 @@ namespace norviguet_control_fletes_api.Controllers
             if (!paymentOrders.Any())
                 return NotFound();
 
-            if (paymentOrders.Any(po => po.Order.Status == OrderStatus.Closed))
+            if (paymentOrders.Any(po => po.Order.Status != OrderStatus.Pending))
             {
                 return Conflict(new
                 {
-                    code = "CANNOT_DELETE_PAYMENT_ORDERS_CLOSED_ORDERS",
+                    code = "CLOSED_OR_REJECTED_ORDER",
                     message = "Cannot delete payment orders because at least one is associated with a closed order."
                 });
             }

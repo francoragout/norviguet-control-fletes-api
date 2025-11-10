@@ -82,8 +82,8 @@ namespace norviguet_control_fletes_api.Controllers
             {
                 return Conflict(new 
                 {
-                    code = "CANNOT_DELETE_CARRIER_WITH_ASSOCIATED_RECORDS",
-                    message = "Carrier cannot be deleted because it has associated delivery notes, payment orders, or invoices."
+                    code = "ASSOCIATED_RECORDS",
+                    message = "Carrier cannot be deleted because it has associated records."
                 });
             }
 
@@ -124,8 +124,8 @@ namespace norviguet_control_fletes_api.Controllers
             {
                 return Conflict(new
                 {
-                    code = "CANNOT_DELETE_CARRIERS_WITH_ASSOCIATED_RECORDS",
-                    message = "Some carriers could not be deleted because they have associated delivery notes, payment orders, or invoices.",
+                    code = "ASSOCIATED_RECORDS",
+                    message = "Some carriers could not be deleted because they have associated records."
                 });
             }
 
