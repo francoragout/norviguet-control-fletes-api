@@ -108,21 +108,14 @@ namespace norviguet_control_fletes_api.Controllers
             if (deliveryNote == null)
                 return NotFound();
 
-            if (deliveryNote.Order.Status != OrderStatus.Pending)
+            if (deliveryNote.Order.Status != OrderStatus.Pending || deliveryNote.Status != DeliveryNoteStatus.Pending)
             {
                 return Conflict(new
                 {
-                    code = "CLOSED_OR_REJECTED_ORDER",
-                    message = "Cannot edit delivery note from a closed or rejected order."
+                    code = "APPROVED_OR_REJECTED_DELIVERY_NOTE_CLOSED_OR_REJECTED_ORDER",
+                    message = "Cannot edit delivery note that is Approved or Rejected, or related to a closed or rejected order."
                 });
             }
-
-            if (deliveryNote.Status != DeliveryNoteStatus.Pending)
-                return BadRequest(new
-                {
-                    code = "APPROVED_OR_CANCELLED_DELIVERY_NOTE",
-                    message = "Cannot update a cancelled or approved delivery note."
-                });
 
             if (await _context.DeliveryNotes.AnyAsync(dn => dn.DeliveryNoteNumber == dto.DeliveryNoteNumber && dn.Id != id))
                 return Conflict(new
@@ -168,7 +161,7 @@ namespace norviguet_control_fletes_api.Controllers
                 return Conflict(new
                 {
                     code = "APPROVED_OR_REJECTED_DELIVERY_NOTE_CLOSED_OR_REJECTED_ORDER",
-                    message = "Only delivery notes with Pending status and related to orders with Pending status can be deleted."
+                    message = "Only delivery notes with Pending status or related to orders with Pending status can be deleted."
                 });
             }
 
@@ -202,10 +195,11 @@ namespace norviguet_control_fletes_api.Controllers
                     _context.DeliveryNotes.RemoveRange(notesToDelete);
                     await _context.SaveChangesAsync();
                 }
+
                 return Conflict(new
                 {
                     code = "APPROVED_OR_REJECTED_DELIVERY_NOTE_CLOSED_OR_REJECTED_ORDER",
-                    message = "Only delivery notes with Pending status and related to orders with Pending status can be deleted. Others were not deleted."
+                    message = "Only delivery notes with Pending status or related to orders with Pending status can be deleted. Others were not deleted."
                 });
             }
 
