@@ -6,6 +6,8 @@ using norviguet_control_fletes_api.Data;
 using norviguet_control_fletes_api.Entities;
 using norviguet_control_fletes_api.Models.Common;
 using norviguet_control_fletes_api.Models.Invoice;
+using norviguet_control_fletes_api.Models.Notification;
+using norviguet_control_fletes_api.Services;
 
 namespace norviguet_control_fletes_api.Controllers
 {
@@ -16,11 +18,16 @@ namespace norviguet_control_fletes_api.Controllers
     {
         private readonly NorviguetDbContext _context;
         private readonly IMapper _mapper;
+        private readonly INotificationService _notificationService;
 
-        public InvoiceController(NorviguetDbContext context, IMapper mapper)
+        public InvoiceController(
+            NorviguetDbContext context, 
+            IMapper mapper, 
+            INotificationService notificationService)
         {
             _context = context;
             _mapper = mapper;
+            _notificationService = notificationService;
         }
 
         [HttpGet("order/{orderId}")]
@@ -89,10 +96,25 @@ namespace norviguet_control_fletes_api.Controllers
                     message = "An invoice for this carrier and order already exists."
                 });
 
-
             var invoice = _mapper.Map<Invoice>(dto);
             _context.Invoices.Add(invoice);
             await _context.SaveChangesAsync();
+
+            var usersToNotify = await _context.Users
+                .Where(u => u.Role == UserRole.Admin || u.Role == UserRole.Payments)
+                .ToListAsync();
+
+            foreach (var user in usersToNotify)
+            {
+                await _notificationService.CreateNotificationAsync(new CreateNotificationDto
+                {
+                    UserId = user.Id,
+                    Title = "Nueva Factura",
+                    Message = $"Se ha creado una nueva factura (ID: {invoice.Id}).",
+                    Link = $"/dashboard/orders/{dto.OrderId}/invoices"
+                });
+            }
+
             return NoContent();
         }
 

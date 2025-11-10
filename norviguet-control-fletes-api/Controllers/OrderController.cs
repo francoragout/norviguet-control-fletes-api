@@ -60,7 +60,7 @@ namespace norviguet_control_fletes_api.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin, Logistics")]
-        public async Task<ActionResult<OrderDto>> CreateOrder([FromBody] CreateOrderDto dto)
+        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderDto dto)
         {
             if (await _context.Orders.AnyAsync(o => o.OrderNumber == dto.OrderNumber))
                 return Conflict(new
@@ -88,8 +88,7 @@ namespace norviguet_control_fletes_api.Controllers
                 });
             }
 
-            var resultDto = _mapper.Map<OrderDto>(order);
-            return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, resultDto);
+            return NoContent();
         }
 
 

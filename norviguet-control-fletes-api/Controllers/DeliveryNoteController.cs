@@ -78,7 +78,7 @@ namespace norviguet_control_fletes_api.Controllers
             await _context.SaveChangesAsync();
 
             var userToNotify = await _context.Users
-                .Where(u => u.Role == UserRole.Admin || u.Role == UserRole.Logistics)
+                .Where(u => u.Role == UserRole.Admin || u.Role == UserRole.Purchasing)
                 .ToListAsync();
 
             foreach (var user in userToNotify)
@@ -93,8 +93,7 @@ namespace norviguet_control_fletes_api.Controllers
                 await _notificationService.CreateNotificationAsync(notificationDto);
             }
 
-            var result = _mapper.Map<DeliveryNoteDto>(deliveryNote);
-            return CreatedAtAction(nameof(GetDeliveryNote), new { id = deliveryNote.Id }, result);
+            return NoContent();
         }
 
         [HttpPut("{id}")]
