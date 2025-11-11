@@ -33,11 +33,17 @@ namespace norviguet_control_fletes_api.Controllers
         [HttpGet("order/{orderId}")]
         public async Task<ActionResult<List<InvoiceDto>>> GetInvoicesByOrderId(int orderId)
         {
+            var order = await _context.Orders.FindAsync(orderId);
+
+            if (order == null)
+                return NotFound();
+
             var invoices = await _context.Invoices
                 .Where(i => i.OrderId == orderId)
                 .Include(i => i.Carrier)
                 .Include(i => i.Order)
                 .ToListAsync();
+
             var result = _mapper.Map<List<InvoiceDto>>(invoices);
             return Ok(result);
         }

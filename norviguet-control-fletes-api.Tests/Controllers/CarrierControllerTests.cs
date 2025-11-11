@@ -1,14 +1,10 @@
-using AutoMapper;
-using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Controllers;
 using norviguet_control_fletes_api.Data;
-using norviguet_control_fletes_api.Entities;
-using norviguet_control_fletes_api.Models.Carrier;
-using norviguet_control_fletes_api.Models.Common;
 using norviguet_control_fletes_api.Profiles;
 
-namespace norviguet_control_fletes_api.Tests
+namespace norviguet_control_fletes_api.Tests.Controllers
 {
     public class CarrierControllerTests
     {
@@ -20,9 +16,8 @@ namespace norviguet_control_fletes_api.Tests
         {
             // Configurar DB en memoria
             var options = new DbContextOptionsBuilder<NorviguetDbContext>()
-                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-                .Options;
-
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
             _context = new NorviguetDbContext(options);
 
             // Configurar AutoMapper
@@ -40,58 +35,176 @@ namespace norviguet_control_fletes_api.Tests
         public async Task GetCarriers_ReturnsOk_WithListOfCarriers()
         {
             // Arrange
-            _context.Carriers.Add(new Carrier { Id = 1, Name = "Test Carrier" });
+            _context.Carriers.Add(new Entities.Carrier { Id = 1, Name = "Test Carrier" });
             await _context.SaveChangesAsync();
 
             // Act
             var result = await _controller.GetCarriers();
 
             // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            var carriers = Assert.IsType<List<CarrierDto>>(okResult.Value);
+            var okResult = Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result.Result);
+            var carriers = Assert.IsType<List<Models.Carrier.CarrierDto>>(okResult.Value);
             Assert.Single(carriers);
             Assert.Equal("Test Carrier", carriers[0].Name);
         }
 
         [Fact]
-        public async Task CreateCarrier_AddsCarrierToDatabase()
+        public async Task GetCarrier_ReturnsOk_WithCarrier()
         {
             // Arrange
-            var dto = new CreateCarrierDto { Name = "New Carrier" };
+            _context.Carriers.Add(new Entities.Carrier { Id = 1, Name = "Test Carrier" });
+            await _context.SaveChangesAsync();
+
+            // Act
+            var result = await _controller.GetCarrier(1);
+
+            // Assert
+            var okResult = Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result.Result);
+            var carrier = Assert.IsType<Models.Carrier.CarrierDto>(okResult.Value);
+            Assert.Equal("Test Carrier", carrier.Name);
+        }
+
+        [Fact]
+        public async Task GetCarrier_ReturnsNotFound_WhenCarrierDoesNotExist()
+        {
+            // Act
+            var result = await _controller.GetCarrier(999);
+            // Assert
+            Assert.IsType<Microsoft.AspNetCore.Mvc.NotFoundResult>(result.Result);
+        }
+
+        [Fact]
+        public async Task CreateCarrier_ReturnsNoContent()
+        {
+            // Arrange
+            var dto = new Models.Carrier.CreateCarrierDto
+            {
+                Name = "New Carrier"
+            };
 
             // Act
             var result = await _controller.CreateCarrier(dto);
 
             // Assert
-            Assert.IsType<NoContentResult>(result);
-            Assert.Single(_context.Carriers);
-            Assert.Equal("New Carrier", _context.Carriers.First().Name);
+            Assert.IsType<Microsoft.AspNetCore.Mvc.NoContentResult>(result);
+            var carrierInDb = await _context.Carriers.FirstOrDefaultAsync(c => c.Name == "New Carrier");
+            Assert.NotNull(carrierInDb);
         }
 
         [Fact]
-        public async Task UpdateCarrier_UpdatesExistingCarrier()
+        public async Task UpdateCarrier_ReturnsNoContent_WhenCarrierExists()
         {
             // Arrange
-            var carrier = new Carrier { Id = 1, Name = "Old Name" };
-            _context.Carriers.Add(carrier);
+            _context.Carriers.Add(new Entities.Carrier { Id = 1, Name = "Old Carrier" });
             await _context.SaveChangesAsync();
-
-            var dto = new UpdateCarrierDto { Name = "Updated Name" };
+            var dto = new Models.Carrier.UpdateCarrierDto
+            {
+                Name = "Updated Carrier"
+            };
 
             // Act
             var result = await _controller.UpdateCarrier(1, dto);
 
             // Assert
-            Assert.IsType<NoContentResult>(result);
-            var updated = await _context.Carriers.FindAsync(1);
-            Assert.Equal("Updated Name", updated!.Name);
+            Assert.IsType<Microsoft.AspNetCore.Mvc.NoContentResult>(result);
+            var carrierInDb = await _context.Carriers.FindAsync(1);
+            Assert.NotNull(carrierInDb);
+            Assert.Equal("Updated Carrier", carrierInDb.Name);
         }
 
         [Fact]
-        public async Task DeleteCarrier_RemovesCarrierFromDatabase()
+        public async Task UpdateCarrier_ReturnsNotFound_WhenCarrierDoesNotExist()
         {
             // Arrange
-            var carrier = new Carrier { Id = 1, Name = "ToDelete" };
+            var dto = new Models.Carrier.UpdateCarrierDto
+            {
+                Name = "Updated Carrier"
+            };
+
+            // Act
+            var result = await _controller.UpdateCarrier(999, dto);
+
+            // Assert
+            Assert.IsType<Microsoft.AspNetCore.Mvc.NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task DeleteCarrier_ReturnsNoContent_WhenCarrierExists()
+        {
+            // Arrange
+            _context.Carriers.Add(new Entities.Carrier { Id = 1, Name = "Carrier to Delete" });
+            await _context.SaveChangesAsync();
+            // Act
+            var result = await _controller.DeleteCarrier(1);
+            // Assert
+            Assert.IsType<Microsoft.AspNetCore.Mvc.NoContentResult>(result);
+            var carrierInDb = await _context.Carriers.FindAsync(1);
+            Assert.Null(carrierInDb);
+        }
+
+        [Fact]
+        public async Task DeleteCarrier_ReturnsNotFound_WhenCarrierDoesNotExist()
+        {
+            // Act
+            var result = await _controller.DeleteCarrier(999);
+            // Assert
+            Assert.IsType<Microsoft.AspNetCore.Mvc.NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task DeleteCarrier_ReturnsConflict_WhenCarrierHasAssociatedRecords()
+        {
+            // Arrange
+            var seller = new Entities.Seller { Id = 1, Name = "Test Seller" };
+            var customer = new Entities.Customer { Id = 1, Name = "Test Customer", CUIT = "20-12345678-9" };
+
+            var order = new Entities.Order
+            {
+                Id = 1,
+                Seller = seller,
+                Customer = customer,
+                // Asigna otros campos requeridos si existen
+            };
+
+            var carrier = new Entities.Carrier
+            {
+                Id = 1,
+                Name = "Carrier with records",
+                DeliveryNotes = new List<Entities.DeliveryNote>(),
+                PaymentOrders = new List<Entities.PaymentOrder>(),
+                Invoices = new List<Entities.Invoice>()
+            };
+
+            var deliveryNote = new Entities.DeliveryNote
+            {
+                Id = 1,
+                CarrierId = 1,
+                OrderId = 1,
+                Carrier = carrier,
+                Order = order
+            };
+            var paymentOrder = new Entities.PaymentOrder
+            {
+                PaymentOrderNumber = "PO1",
+                CarrierId = 1,
+                OrderId = 1,
+                Carrier = carrier,
+                Order = order
+            };
+            var invoice = new Entities.Invoice
+            {
+                Id = 1,
+                CarrierId = 1,
+                OrderId = 1,
+                Price = 100,
+                Carrier = carrier,
+                Order = order
+            };
+
+            carrier.DeliveryNotes.Add(deliveryNote);
+            carrier.PaymentOrders.Add(paymentOrder);
+            carrier.Invoices.Add(invoice);
+
             _context.Carriers.Add(carrier);
             await _context.SaveChangesAsync();
 
@@ -99,28 +212,90 @@ namespace norviguet_control_fletes_api.Tests
             var result = await _controller.DeleteCarrier(1);
 
             // Assert
-            Assert.IsType<NoContentResult>(result);
-            Assert.Empty(_context.Carriers);
+            var conflictResult = Assert.IsType<Microsoft.AspNetCore.Mvc.ConflictObjectResult>(result);
+            var value = conflictResult.Value?.ToString();
+            Assert.Contains("ASSOCIATED_RECORDS", value);
+            Assert.Contains("Carrier cannot be deleted because it has associated records.", value);
         }
 
         [Fact]
-        public async Task DeleteCarriersBulk_RemovesMultipleCarriers()
+        public async Task DeleteCarriersBulk_ReturnsNotFound_WhenNoCarriersFound()
         {
             // Arrange
-            _context.Carriers.AddRange(
-                new Carrier { Id = 1, Name = "Carrier1" },
-                new Carrier { Id = 2, Name = "Carrier2" }
-            );
-            await _context.SaveChangesAsync();
-
-            var dto = new DeleteEntitiesDto { Ids = new List<int> { 1, 2 } };
+            var dto = new Models.Common.DeleteEntitiesDto { Ids = new List<int> { 1, 2 } };
 
             // Act
             var result = await _controller.DeleteCarriersBulk(dto);
 
             // Assert
-            Assert.IsType<NoContentResult>(result);
-            Assert.Empty(_context.Carriers);
+            Assert.IsType<Microsoft.AspNetCore.Mvc.NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task DeleteCarriersBulk_ReturnsNoContent_WhenAllCarriersCanBeDeleted()
+        {
+            // Arrange
+            _context.Carriers.Add(new Entities.Carrier { Id = 1, Name = "Carrier 1" });
+            _context.Carriers.Add(new Entities.Carrier { Id = 2, Name = "Carrier 2" });
+            await _context.SaveChangesAsync();
+
+            var dto = new Models.Common.DeleteEntitiesDto { Ids = new List<int> { 1, 2 } };
+
+            // Act
+            var result = await _controller.DeleteCarriersBulk(dto);
+
+            // Assert
+            Assert.IsType<Microsoft.AspNetCore.Mvc.NoContentResult>(result);
+            Assert.Null(await _context.Carriers.FindAsync(1));
+            Assert.Null(await _context.Carriers.FindAsync(2));
+        }
+
+        [Fact]
+        public async Task DeleteCarriersBulk_ReturnsConflict_WhenSomeCarriersHaveAssociatedRecords()
+        {
+            // Arrange
+            var seller = new Entities.Seller { Id = 1, Name = "Test Seller" };
+            var customer = new Entities.Customer { Id = 1, Name = "Test Customer", CUIT = "20-12345678-9" };
+            var order = new Entities.Order { Id = 1, Seller = seller, Customer = customer };
+
+            var carrierWithRecords = new Entities.Carrier
+            {
+                Id = 1,
+                Name = "Carrier with records",
+                DeliveryNotes = new List<Entities.DeliveryNote>(),
+                PaymentOrders = new List<Entities.PaymentOrder>(),
+                Invoices = new List<Entities.Invoice>()
+            };
+            var deliveryNote = new Entities.DeliveryNote
+            {
+                Id = 1,
+                CarrierId = 1,
+                OrderId = 1,
+                Carrier = carrierWithRecords,
+                Order = order
+            };
+            carrierWithRecords.DeliveryNotes.Add(deliveryNote);
+
+            var carrierWithoutRecords = new Entities.Carrier { Id = 2, Name = "Carrier without records" };
+
+            _context.Carriers.Add(carrierWithRecords);
+            _context.Carriers.Add(carrierWithoutRecords);
+            await _context.SaveChangesAsync();
+
+            var dto = new Models.Common.DeleteEntitiesDto { Ids = new List<int> { 1, 2 } };
+
+            // Act
+            var result = await _controller.DeleteCarriersBulk(dto);
+
+            // Assert
+            var conflictResult = Assert.IsType<Microsoft.AspNetCore.Mvc.ConflictObjectResult>(result);
+            var value = conflictResult.Value?.ToString();
+            Assert.Contains("ASSOCIATED_RECORDS", value);
+            Assert.Contains("Some carriers could not be deleted because they have associated records.", value);
+
+            // Carrier 2 debe haber sido eliminado, Carrier 1 no
+            Assert.Null(await _context.Carriers.FindAsync(2));
+            Assert.NotNull(await _context.Carriers.FindAsync(1));
         }
     }
 }

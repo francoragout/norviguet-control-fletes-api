@@ -73,6 +73,7 @@ namespace norviguet_control_fletes_api.Controllers
                 .Include(c => c.PaymentOrders)
                 .Include(c => c.Invoices)
                 .FirstOrDefaultAsync(c => c.Id == id);
+
             if (carrier == null)
                 return NotFound();
 
