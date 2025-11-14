@@ -45,7 +45,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<INotificationService, NotificationService>();
 // Registro de BlobServiceClient
 builder.Services.AddSingleton(x =>
     new BlobServiceClient(builder.Configuration["AzureStorage:ConnectionString"]));

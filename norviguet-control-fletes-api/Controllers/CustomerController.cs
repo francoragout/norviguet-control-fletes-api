@@ -103,14 +103,6 @@ namespace norviguet_control_fletes_api.Controllers
                 .Where(c => c.Orders?.Any() == true)
                 .ToList();
 
-            var canDelete = customers.Except(cannotDelete).ToList();
-
-            if (canDelete.Any())
-            {
-                _context.Customers.RemoveRange(canDelete);
-                await _context.SaveChangesAsync();
-            }
-
             if (cannotDelete.Any())
             {
                 return Conflict(new
@@ -120,6 +112,8 @@ namespace norviguet_control_fletes_api.Controllers
                 });
             }
 
+            _context.Customers.RemoveRange(customers);
+            await _context.SaveChangesAsync();
             return NoContent();
         }
     }

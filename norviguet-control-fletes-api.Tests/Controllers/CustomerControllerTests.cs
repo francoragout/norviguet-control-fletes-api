@@ -240,6 +240,10 @@ namespace norviguet_control_fletes_api.Tests.Controllers
             // Assert
             var conflictResult = Assert.IsType<Microsoft.AspNetCore.Mvc.ConflictObjectResult>(result);
             var value = conflictResult.Value?.ToString();
+            Assert.Contains("ASSOCIATED_RECORDS", value);
+            // Verifica que ninguno fue eliminado
+            var customersInDb = await _context.Customers.Where(c => idsToDelete.Contains(c.Id)).ToListAsync();
+            Assert.Equal(2, customersInDb.Count);
         }
 
         [Fact]

@@ -207,6 +207,9 @@ namespace norviguet_control_fletes_api.Tests.Controllers
             var value = conflictResult.Value?.ToString();
             Assert.Contains("ASSOCIATED_RECORDS", value);
             Assert.Contains("Some sellers could not be deleted because they have associated orders.", value);
+            // Verifica que ninguno fue eliminado
+            var sellersInDb = await _context.Sellers.Where(s => idsToDelete.Contains(s.Id)).ToListAsync();
+            Assert.Equal(2, sellersInDb.Count);
         }
 
         [Fact]

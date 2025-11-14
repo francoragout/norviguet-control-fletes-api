@@ -113,14 +113,6 @@ namespace norviguet_control_fletes_api.Controllers
                              (c.Invoices?.Any() == true))
                 .ToList();
 
-            var canDelete = carriers.Except(cannotDelete).ToList();
-
-            if (canDelete.Any())
-            {
-                _context.Carriers.RemoveRange(canDelete);
-                await _context.SaveChangesAsync();
-            }
-
             if (cannotDelete.Any())
             {
                 return Conflict(new
@@ -130,6 +122,8 @@ namespace norviguet_control_fletes_api.Controllers
                 });
             }
 
+            _context.Carriers.RemoveRange(carriers);
+            await _context.SaveChangesAsync();
             return NoContent();
         }
 
@@ -137,13 +131,26 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Purchasing")]
         public async Task<ActionResult<List<CarrierDto>>> GetCarriersWithDeliveryNotesByOrder(int orderId)
         {
-            var carriers = await _context.DeliveryNotes
+            // Carriers con delivery notes para el pedido
+            var carriersWithDeliveryNotes = await _context.DeliveryNotes
                 .Where(dn => dn.OrderId == orderId)
                 .Select(dn => dn.Carrier)
                 .Distinct()
                 .ToListAsync();
 
-            var result = _mapper.Map<List<CarrierDto>>(carriers);
+            // Carriers que ya tienen invoice para el pedido
+            var carrierIdsWithInvoice = await _context.Invoices
+                .Where(i => i.OrderId == orderId)
+                .Select(i => i.CarrierId)
+                .Distinct()
+                .ToListAsync();
+
+            // Filtrar solo los que NO tienen invoice
+            var filteredCarriers = carriersWithDeliveryNotes
+                .Where(c => !carrierIdsWithInvoice.Contains(c.Id))
+                .ToList();
+
+            var result = _mapper.Map<List<CarrierDto>>(filteredCarriers);
             return Ok(result);
         }
 

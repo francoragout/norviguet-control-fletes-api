@@ -7,7 +7,6 @@ using norviguet_control_fletes_api.Controllers;
 using norviguet_control_fletes_api.Data;
 using norviguet_control_fletes_api.Entities;
 using norviguet_control_fletes_api.Models.Auth;
-using norviguet_control_fletes_api.Models.Notification;
 using norviguet_control_fletes_api.Profiles;
 using norviguet_control_fletes_api.Services;
 
@@ -17,7 +16,6 @@ namespace norviguet_control_fletes_api.Tests
     {
         private readonly AuthController _controller;
         private readonly Mock<IAuthService> _authMock;
-        private readonly Mock<INotificationService> _notificationMock;
         private readonly IMapper _mapper;
         private readonly NorviguetDbContext _context;
 
@@ -29,7 +27,6 @@ namespace norviguet_control_fletes_api.Tests
             _context = new NorviguetDbContext(options);
 
             _authMock = new Mock<IAuthService>();
-            _notificationMock = new Mock<INotificationService>();
 
             var config = new MapperConfiguration(cfg =>
             {
@@ -38,7 +35,7 @@ namespace norviguet_control_fletes_api.Tests
             });
             _mapper = config.CreateMapper();
 
-            _controller = new AuthController(_authMock.Object, _mapper, _context, _notificationMock.Object);
+            _controller = new AuthController(_authMock.Object, _mapper, _context);
         }
 
         // Utilidad para simular cookies en HttpContext.Request
@@ -48,9 +45,9 @@ namespace norviguet_control_fletes_api.Tests
             httpContext.Request.Headers["Cookie"] = string.Join("; ", cookies.Select(kvp => $"{kvp.Key}={kvp.Value}"));
         }
 
-        // 🧩1. Register() — usuario nuevo, notifica admins
+        // 🧩1. Register() — usuario nuevo
         [Fact]
-        public async Task Register_CreatesUserAndNotifiesAdmins()
+        public async Task Register_CreatesUser()
         {
             // Arrange
             var request = new RegisterDto { Name = "Test", Email = "test@mail.com", Password = "Password1!", ConfirmPassword = "Password1!" };
@@ -58,7 +55,6 @@ namespace norviguet_control_fletes_api.Tests
             _authMock.Setup(a => a.RegisterAsync(request)).ReturnsAsync(user);
             _context.Users.Add(new User { Id =1, Name = "Admin", Role = UserRole.Admin });
             await _context.SaveChangesAsync();
-            _notificationMock.Setup(n => n.CreateNotificationAsync(It.IsAny<CreateNotificationDto>())).ReturnsAsync(new Notification());
 
             // Act
             var result = await _controller.Register(request);

@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
 using norviguet_control_fletes_api.Entities;
 using norviguet_control_fletes_api.Models.Common;
-using norviguet_control_fletes_api.Models.Notification;
 using norviguet_control_fletes_api.Models.Order;
 using norviguet_control_fletes_api.Services;
 
@@ -18,16 +17,13 @@ namespace norviguet_control_fletes_api.Controllers
     {
         private readonly NorviguetDbContext _context;
         private readonly IMapper _mapper;
-        private readonly INotificationService _notificationService;
 
         public OrderController(
             NorviguetDbContext context,
-            IMapper mapper,
-            INotificationService notificationService)
+            IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
-            _notificationService = notificationService;
         }
 
         [HttpGet]
@@ -72,21 +68,6 @@ namespace norviguet_control_fletes_api.Controllers
             var order = _mapper.Map<Order>(dto);
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
-
-            var usersToNotify = await _context.Users
-                .Where(u => u.Role != UserRole.Pending)
-                .ToListAsync();
-
-            foreach (var user in usersToNotify)
-            {
-                await _notificationService.CreateNotificationAsync(new CreateNotificationDto
-                {
-                    UserId = user.Id,
-                    Title = "Nuevo Pedido",
-                    Message = $"Se ha creado un nuevo pedido (ID: {order.Id}).",
-                    Link = $"/dashboard/orders/{order.Id}/update"
-                });
-            }
 
             return NoContent();
         }

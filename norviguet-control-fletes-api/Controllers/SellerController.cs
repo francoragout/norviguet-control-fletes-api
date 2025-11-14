@@ -92,17 +92,14 @@ namespace norviguet_control_fletes_api.Controllers
                 .Where(s => dto.Ids.Contains(s.Id))
                 .Include(s => s.Orders)
                 .ToListAsync();
+
             if (sellers.Count == 0)
                 return NotFound();
+
             var cannotDelete = sellers
                 .Where(s => s.Orders?.Any() == true)
                 .ToList();
-            var canDelete = sellers.Except(cannotDelete).ToList();
-            if (canDelete.Any())
-            {
-                _context.Sellers.RemoveRange(canDelete);
-                await _context.SaveChangesAsync();
-            }
+
             if (cannotDelete.Any())
             {
                 return Conflict(new {
@@ -110,6 +107,9 @@ namespace norviguet_control_fletes_api.Controllers
                     message = "Some sellers could not be deleted because they have associated orders."
                 });
             }
+
+            _context.Sellers.RemoveRange(sellers);
+            await _context.SaveChangesAsync();
             return NoContent();
         }
     }

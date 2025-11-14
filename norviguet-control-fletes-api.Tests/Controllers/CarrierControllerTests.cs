@@ -292,10 +292,9 @@ namespace norviguet_control_fletes_api.Tests.Controllers
             var value = conflictResult.Value?.ToString();
             Assert.Contains("ASSOCIATED_RECORDS", value);
             Assert.Contains("Some carriers could not be deleted because they have associated records.", value);
-
-            // Carrier 2 debe haber sido eliminado, Carrier 1 no
-            Assert.Null(await _context.Carriers.FindAsync(2));
+            // Verifica que ninguno fue eliminado
             Assert.NotNull(await _context.Carriers.FindAsync(1));
+            Assert.NotNull(await _context.Carriers.FindAsync(2));
         }
     }
 }

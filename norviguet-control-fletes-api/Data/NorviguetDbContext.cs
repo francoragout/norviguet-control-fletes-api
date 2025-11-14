@@ -7,7 +7,6 @@ namespace norviguet_control_fletes_api.Data
     {
         public DbSet<User> Users { get; set; } = null!;
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
-        public DbSet<Notification> Notifications { get; set; } = null!;
         public DbSet<Order> Orders { get; set; } = null!;
         public DbSet<DeliveryNote> DeliveryNotes { get; set; } = null!;
         public DbSet<Invoice> Invoices { get; set; } = null!;
@@ -74,12 +73,6 @@ namespace norviguet_control_fletes_api.Data
                 .HasMany(u => u.RefreshTokens)
                 .WithOne(rt => rt.User)
                 .HasForeignKey(rt => rt.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<User>()
-                .HasMany(u => u.Notifications)
-                .WithOne(n => n.User)
-                .HasForeignKey(n => n.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Order>()
