@@ -127,9 +127,9 @@ namespace norviguet_control_fletes_api.Controllers
             return NoContent();
         }
 
-        [HttpGet("by-order/{orderId}/with-delivery-notes")]
+        [HttpGet("by-order/{orderId}/without-invoices")]
         [Authorize(Roles = "Admin, Purchasing")]
-        public async Task<ActionResult<List<CarrierDto>>> GetCarriersWithDeliveryNotesByOrder(int orderId)
+        public async Task<ActionResult<List<CarrierDto>>> GetCarriersWithoutInvoicesByOrderId(int orderId)
         {
             // Carriers con delivery notes para el pedido
             var carriersWithDeliveryNotes = await _context.DeliveryNotes
@@ -154,16 +154,30 @@ namespace norviguet_control_fletes_api.Controllers
             return Ok(result);
         }
 
-        [HttpGet("by-order/{orderId}/with-invoices")]
+        [HttpGet("by-order/{orderId}/without-payment-orders")]
         [Authorize(Roles = "Admin, Payments")]
-        public async Task<ActionResult<List<CarrierDto>>> GetCarriersWithInvoicesByOrder(int orderId)
+        public async Task<ActionResult<List<CarrierDto>>> GetCarriersWithoutPaymentOrdersByOrderId(int orderId)
         {
-            var carriers = await _context.Invoices
-                .Where(i => i.OrderId == orderId)
-                .Select(i => i.Carrier)
+            // Carriers con delivery notes para el pedido
+            var carriersWithDeliveryNotes = await _context.DeliveryNotes
+                .Where(dn => dn.OrderId == orderId)
+                .Select(dn => dn.Carrier)
                 .Distinct()
                 .ToListAsync();
-            var result = _mapper.Map<List<CarrierDto>>(carriers);
+
+            // Carriers que ya tienen payment order para el pedido
+            var carrierIdsWithPaymentOrder = await _context.PaymentOrders
+                .Where(po => po.OrderId == orderId)
+                .Select(po => po.CarrierId)
+                .Distinct()
+                .ToListAsync();
+
+            // Filtrar solo los que NO tienen payment order
+            var filteredCarriers = carriersWithDeliveryNotes
+                .Where(c => !carrierIdsWithPaymentOrder.Contains(c.Id))
+                .ToList();
+
+            var result = _mapper.Map<List<CarrierDto>>(filteredCarriers);
             return Ok(result);
         }
     }
