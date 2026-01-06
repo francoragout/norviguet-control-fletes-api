@@ -4,6 +4,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using norviguet_control_fletes_api.Data;
+using norviguet_control_fletes_api.Repositories;
 using norviguet_control_fletes_api.Services;
 using Scalar.AspNetCore;
 using System.Text;
@@ -25,8 +26,9 @@ builder.Services.AddControllers()
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+// Use the same connection string key as in appsettings.json ("norviguetDB")
 builder.Services.AddDbContext<NorviguetDbContext>(options =>
-       options.UseSqlServer(builder.Configuration.GetConnectionString("NorviguetDB")));
+       options.UseSqlServer(builder.Configuration.GetConnectionString("norviguetDB")));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -45,6 +47,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ICarrierService, CarrierService>();
+
 // Registro de BlobServiceClient
 builder.Services.AddSingleton(x =>
     new BlobServiceClient(builder.Configuration["AzureStorage:ConnectionString"]));
@@ -55,6 +59,7 @@ builder.Services.AddSingleton(x =>
         builder.Configuration["AzureStorage:ContainerName"]));
 // Registro de tu servicio de blobs
 builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
+builder.Services.AddScoped<ICarrierRepository, CarrierRepository>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 
@@ -88,6 +93,22 @@ catch (Exception ex)
 
 // Configure the HTTP request pipeline.
 var app = builder.Build();
+
+// Apply any pending migrations at startup to ensure tables exist
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<NorviguetDbContext>();
+        db.Database.Migrate();
+        Console.WriteLine("Database migrated/applied successfully.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error applying migrations: {ex.Message}");
+    }
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

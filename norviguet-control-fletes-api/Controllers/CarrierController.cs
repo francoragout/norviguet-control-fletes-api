@@ -1,11 +1,9 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using norviguet_control_fletes_api.Data;
-using norviguet_control_fletes_api.Entities;
 using norviguet_control_fletes_api.Models.Carrier;
 using norviguet_control_fletes_api.Models.Common;
+using norviguet_control_fletes_api.Services;
 
 namespace norviguet_control_fletes_api.Controllers
 {
@@ -14,82 +12,87 @@ namespace norviguet_control_fletes_api.Controllers
     [Authorize]
     public class CarrierController : ControllerBase
     {
-        private readonly NorviguetDbContext _context;
-        private readonly IMapper _mapper;
+        private readonly ICarrierService _carrierService;
 
-        public CarrierController(NorviguetDbContext context, IMapper mapper)
+        public CarrierController(ICarrierService carrierService)
         {
-            _context = context;
-            _mapper = mapper;
+            _carrierService = carrierService;
         }
 
         [HttpGet]
         public async Task<ActionResult<List<CarrierDto>>> GetCarriers()
         {
-            var carriers = await _context.Carriers.ToListAsync();
-            var result = _mapper.Map<List<CarrierDto>>(carriers);
-            return Ok(result);
+            var result = await _carrierService.GetAllCarriersAsync();
+            
+            if (!result.IsSuccess)
+                return StatusCode(500, new { message = result.ErrorMessage, code = result.ErrorCode });
+            
+            return Ok(result.Data);
         }
 
         [HttpGet("{id}")]
         [Authorize(Roles = "Admin, Logistics")]
         public async Task<ActionResult<CarrierDto>> GetCarrier(int id)
         {
-            var carrier = await _context.Carriers.FindAsync(id);
-            if (carrier == null)
-                return NotFound();
-            var result = _mapper.Map<CarrierDto>(carrier);
-            return Ok(result);
+            var result = await _carrierService.GetCarrierByIdAsync(id);
+            
+            if (!result.IsSuccess)
+            {
+                if (result.ErrorCode == "NOT_FOUND")
+                    return NotFound(new { message = result.ErrorMessage, code = result.ErrorCode });
+                
+                return StatusCode(500, new { message = result.ErrorMessage, code = result.ErrorCode });
+            }
+            
+            return Ok(result.Data);
         }
 
         [HttpPost]
         [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> CreateCarrier([FromBody] CreateCarrierDto dto)
         {
-            var carrier = _mapper.Map<Carrier>(dto);
-            _context.Carriers.Add(carrier);
-            await _context.SaveChangesAsync();
-            return NoContent();
+            var result = await _carrierService.CreateCarrierAsync(dto);
+            
+            if (!result.IsSuccess)
+                return StatusCode(500, new { message = result.ErrorMessage, code = result.ErrorCode });
+            
+            return CreatedAtAction(nameof(GetCarrier), new { id = result.Data!.Id }, result.Data);
         }
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> UpdateCarrier(int id, [FromBody] UpdateCarrierDto dto)
         {
-            var carrier = await _context.Carriers.FindAsync(id);
-            if (carrier == null)
-                return NotFound();
-            _mapper.Map(dto, carrier);
-            await _context.SaveChangesAsync();
-            return NoContent();
+            var result = await _carrierService.UpdateCarrierAsync(id, dto);
+            
+            if (!result.IsSuccess)
+            {
+                if (result.ErrorCode == "NOT_FOUND")
+                    return NotFound(new { message = result.ErrorMessage, code = result.ErrorCode });
+                
+                return StatusCode(500, new { message = result.ErrorMessage, code = result.ErrorCode });
+            }
+            
+            return Ok(result.Data);
         }
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> DeleteCarrier(int id)
         {
-            var carrier = await _context.Carriers
-                .Include(c => c.DeliveryNotes)
-                .Include(c => c.PaymentOrders)
-                .Include(c => c.Invoices)
-                .FirstOrDefaultAsync(c => c.Id == id);
-
-            if (carrier == null)
-                return NotFound();
-
-            if ((carrier.DeliveryNotes?.Any() == true) ||
-                (carrier.PaymentOrders?.Any() == true) ||
-                (carrier.Invoices?.Any() == true))
+            var result = await _carrierService.DeleteCarrierAsync(id);
+            
+            if (!result.IsSuccess)
             {
-                return Conflict(new 
-                {
-                    code = "ASSOCIATED_RECORDS",
-                    message = "Carrier cannot be deleted because it has associated records."
-                });
+                if (result.ErrorCode == "NOT_FOUND")
+                    return NotFound(new { message = result.ErrorMessage, code = result.ErrorCode });
+                
+                if (result.ErrorCode == "ASSOCIATED_RECORDS")
+                    return Conflict(new { message = result.ErrorMessage, code = result.ErrorCode });
+                
+                return StatusCode(500, new { message = result.ErrorMessage, code = result.ErrorCode });
             }
-
-            _context.Carriers.Remove(carrier);
-            await _context.SaveChangesAsync();
+            
             return NoContent();
         }
 
@@ -97,33 +100,19 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> DeleteCarriersBulk([FromBody] DeleteEntitiesDto dto)
         {
-            var carriers = await _context.Carriers
-                .Where(c => dto.Ids.Contains(c.Id))
-                .Include(c => c.DeliveryNotes)
-                .Include(c => c.PaymentOrders)
-                .Include(c => c.Invoices)
-                .ToListAsync();
-
-            if (carriers.Count == 0)
-                return NotFound();
-
-            var cannotDelete = carriers
-                .Where(c => (c.DeliveryNotes?.Any() == true) ||
-                             (c.PaymentOrders?.Any() == true) ||
-                             (c.Invoices?.Any() == true))
-                .ToList();
-
-            if (cannotDelete.Any())
+            var result = await _carrierService.DeleteCarriersBulkAsync(dto.Ids);
+            
+            if (!result.IsSuccess)
             {
-                return Conflict(new
-                {
-                    code = "ASSOCIATED_RECORDS",
-                    message = "Some carriers could not be deleted because they have associated records."
-                });
+                if (result.ErrorCode == "NOT_FOUND")
+                    return NotFound(new { message = result.ErrorMessage, code = result.ErrorCode });
+                
+                if (result.ErrorCode == "ASSOCIATED_RECORDS")
+                    return Conflict(new { message = result.ErrorMessage, code = result.ErrorCode });
+                
+                return StatusCode(500, new { message = result.ErrorMessage, code = result.ErrorCode });
             }
-
-            _context.Carriers.RemoveRange(carriers);
-            await _context.SaveChangesAsync();
+            
             return NoContent();
         }
 
@@ -131,54 +120,24 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Purchasing")]
         public async Task<ActionResult<List<CarrierDto>>> GetCarriersWithoutInvoicesByOrderId(int orderId)
         {
-            // Carriers con delivery notes para el pedido
-            var carriersWithDeliveryNotes = await _context.DeliveryNotes
-                .Where(dn => dn.OrderId == orderId)
-                .Select(dn => dn.Carrier)
-                .Distinct()
-                .ToListAsync();
-
-            // Carriers que ya tienen invoice para el pedido
-            var carrierIdsWithInvoice = await _context.Invoices
-                .Where(i => i.OrderId == orderId)
-                .Select(i => i.CarrierId)
-                .Distinct()
-                .ToListAsync();
-
-            // Filtrar solo los que NO tienen invoice
-            var filteredCarriers = carriersWithDeliveryNotes
-                .Where(c => !carrierIdsWithInvoice.Contains(c.Id))
-                .ToList();
-
-            var result = _mapper.Map<List<CarrierDto>>(filteredCarriers);
-            return Ok(result);
+            var result = await _carrierService.GetCarriersWithoutInvoicesByOrderIdAsync(orderId);
+            
+            if (!result.IsSuccess)
+                return StatusCode(500, new { message = result.ErrorMessage, code = result.ErrorCode });
+            
+            return Ok(result.Data);
         }
 
         [HttpGet("by-order/{orderId}/without-payment-orders")]
         [Authorize(Roles = "Admin, Payments")]
         public async Task<ActionResult<List<CarrierDto>>> GetCarriersWithoutPaymentOrdersByOrderId(int orderId)
         {
-            // Carriers con delivery notes para el pedido
-            var carriersWithDeliveryNotes = await _context.DeliveryNotes
-                .Where(dn => dn.OrderId == orderId)
-                .Select(dn => dn.Carrier)
-                .Distinct()
-                .ToListAsync();
-
-            // Carriers que ya tienen payment order para el pedido
-            var carrierIdsWithPaymentOrder = await _context.PaymentOrders
-                .Where(po => po.OrderId == orderId)
-                .Select(po => po.CarrierId)
-                .Distinct()
-                .ToListAsync();
-
-            // Filtrar solo los que NO tienen payment order
-            var filteredCarriers = carriersWithDeliveryNotes
-                .Where(c => !carrierIdsWithPaymentOrder.Contains(c.Id))
-                .ToList();
-
-            var result = _mapper.Map<List<CarrierDto>>(filteredCarriers);
-            return Ok(result);
+            var result = await _carrierService.GetCarriersWithoutPaymentOrdersByOrderIdAsync(orderId);
+            
+            if (!result.IsSuccess)
+                return StatusCode(500, new { message = result.ErrorMessage, code = result.ErrorCode });
+            
+            return Ok(result.Data);
         }
     }
 }

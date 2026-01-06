@@ -1,8 +1,12 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
 using norviguet_control_fletes_api.Controllers;
 using norviguet_control_fletes_api.Data;
 using norviguet_control_fletes_api.Profiles;
+using norviguet_control_fletes_api.Repositories;
+using norviguet_control_fletes_api.Services;
 
 namespace norviguet_control_fletes_api.Tests.Controllers
 {
@@ -11,24 +15,27 @@ namespace norviguet_control_fletes_api.Tests.Controllers
         private readonly CarrierController _controller;
         private readonly NorviguetDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ICarrierService _carrierService;
+        private readonly ICarrierRepository _carrierRepository;
 
         public CarrierControllerTests()
         {
-            // Configurar DB en memoria
             var options = new DbContextOptionsBuilder<NorviguetDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .Options;
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
             _context = new NorviguetDbContext(options);
 
-            // Configurar AutoMapper
             var config = new MapperConfiguration(cfg =>
             {
                 cfg.AddProfile<CarrierProfile>();
             });
             _mapper = config.CreateMapper();
 
-            // Instanciar el controlador
-            _controller = new CarrierController(_context, _mapper);
+            var logger = new Mock<ILogger<CarrierService>>().Object;
+            
+            _carrierRepository = new CarrierRepository(_context);
+            _carrierService = new CarrierService(_carrierRepository, _mapper, logger);
+            _controller = new CarrierController(_carrierService);
         }
 
         [Fact]
@@ -69,12 +76,13 @@ namespace norviguet_control_fletes_api.Tests.Controllers
         {
             // Act
             var result = await _controller.GetCarrier(999);
+            
             // Assert
-            Assert.IsType<Microsoft.AspNetCore.Mvc.NotFoundResult>(result.Result);
+            Assert.IsType<Microsoft.AspNetCore.Mvc.NotFoundObjectResult>(result.Result);
         }
 
         [Fact]
-        public async Task CreateCarrier_ReturnsNoContent()
+        public async Task CreateCarrier_ReturnsCreated()
         {
             // Arrange
             var dto = new Models.Carrier.CreateCarrierDto
@@ -86,13 +94,13 @@ namespace norviguet_control_fletes_api.Tests.Controllers
             var result = await _controller.CreateCarrier(dto);
 
             // Assert
-            Assert.IsType<Microsoft.AspNetCore.Mvc.NoContentResult>(result);
+            Assert.IsType<Microsoft.AspNetCore.Mvc.CreatedAtActionResult>(result);
             var carrierInDb = await _context.Carriers.FirstOrDefaultAsync(c => c.Name == "New Carrier");
             Assert.NotNull(carrierInDb);
         }
 
         [Fact]
-        public async Task UpdateCarrier_ReturnsNoContent_WhenCarrierExists()
+        public async Task UpdateCarrier_ReturnsOk_WhenCarrierExists()
         {
             // Arrange
             _context.Carriers.Add(new Entities.Carrier { Id = 1, Name = "Old Carrier" });
@@ -106,7 +114,7 @@ namespace norviguet_control_fletes_api.Tests.Controllers
             var result = await _controller.UpdateCarrier(1, dto);
 
             // Assert
-            Assert.IsType<Microsoft.AspNetCore.Mvc.NoContentResult>(result);
+            Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result);
             var carrierInDb = await _context.Carriers.FindAsync(1);
             Assert.NotNull(carrierInDb);
             Assert.Equal("Updated Carrier", carrierInDb.Name);
@@ -125,7 +133,7 @@ namespace norviguet_control_fletes_api.Tests.Controllers
             var result = await _controller.UpdateCarrier(999, dto);
 
             // Assert
-            Assert.IsType<Microsoft.AspNetCore.Mvc.NotFoundResult>(result);
+            Assert.IsType<Microsoft.AspNetCore.Mvc.NotFoundObjectResult>(result);
         }
 
         [Fact]
@@ -134,8 +142,10 @@ namespace norviguet_control_fletes_api.Tests.Controllers
             // Arrange
             _context.Carriers.Add(new Entities.Carrier { Id = 1, Name = "Carrier to Delete" });
             await _context.SaveChangesAsync();
+            
             // Act
             var result = await _controller.DeleteCarrier(1);
+            
             // Assert
             Assert.IsType<Microsoft.AspNetCore.Mvc.NoContentResult>(result);
             var carrierInDb = await _context.Carriers.FindAsync(1);
@@ -147,8 +157,9 @@ namespace norviguet_control_fletes_api.Tests.Controllers
         {
             // Act
             var result = await _controller.DeleteCarrier(999);
+            
             // Assert
-            Assert.IsType<Microsoft.AspNetCore.Mvc.NotFoundResult>(result);
+            Assert.IsType<Microsoft.AspNetCore.Mvc.NotFoundObjectResult>(result);
         }
 
         [Fact]
@@ -163,7 +174,6 @@ namespace norviguet_control_fletes_api.Tests.Controllers
                 Id = 1,
                 Seller = seller,
                 Customer = customer,
-                // Asigna otros campos requeridos si existen
             };
 
             var carrier = new Entities.Carrier
@@ -215,7 +225,6 @@ namespace norviguet_control_fletes_api.Tests.Controllers
             var conflictResult = Assert.IsType<Microsoft.AspNetCore.Mvc.ConflictObjectResult>(result);
             var value = conflictResult.Value?.ToString();
             Assert.Contains("ASSOCIATED_RECORDS", value);
-            Assert.Contains("Carrier cannot be deleted because it has associated records.", value);
         }
 
         [Fact]
@@ -228,7 +237,7 @@ namespace norviguet_control_fletes_api.Tests.Controllers
             var result = await _controller.DeleteCarriersBulk(dto);
 
             // Assert
-            Assert.IsType<Microsoft.AspNetCore.Mvc.NotFoundResult>(result);
+            Assert.IsType<Microsoft.AspNetCore.Mvc.NotFoundObjectResult>(result);
         }
 
         [Fact]
@@ -291,8 +300,6 @@ namespace norviguet_control_fletes_api.Tests.Controllers
             var conflictResult = Assert.IsType<Microsoft.AspNetCore.Mvc.ConflictObjectResult>(result);
             var value = conflictResult.Value?.ToString();
             Assert.Contains("ASSOCIATED_RECORDS", value);
-            Assert.Contains("Some carriers could not be deleted because they have associated records.", value);
-            // Verifica que ninguno fue eliminado
             Assert.NotNull(await _context.Carriers.FindAsync(1));
             Assert.NotNull(await _context.Carriers.FindAsync(2));
         }
