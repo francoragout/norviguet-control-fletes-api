@@ -3,8 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
-using norviguet_control_fletes_api.Models.Common;
-using norviguet_control_fletes_api.Models.User;
+using norviguet_control_fletes_api.Models.DTOs.Common;
+using norviguet_control_fletes_api.Models.DTOs.User;
+using norviguet_control_fletes_api.Models.Entities;
 
 namespace norviguet_control_fletes_api.Controllers
 {
@@ -13,11 +14,11 @@ namespace norviguet_control_fletes_api.Controllers
     [Authorize]
     public class UserController : ControllerBase
     {
-        private readonly NorviguetDbContext _context;
+        private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly IBlobStorageService _blobStorageService;
 
-        public UserController(NorviguetDbContext context, IMapper mapper, IBlobStorageService blobStorageService)
+        public UserController(ApplicationDbContext context, IMapper mapper, IBlobStorageService blobStorageService)
         {
             _context = context;
             _mapper = mapper;
@@ -54,15 +55,15 @@ namespace norviguet_control_fletes_api.Controllers
                 return NotFound();
 
             // Validación: no cambiar el rol del único admin
-            var isAdmin = user.Role == Entities.UserRole.Admin;
-            var totalAdmins = await _context.Users.CountAsync(u => u.Role == Entities.UserRole.Admin);
+            var isAdmin = user.Role == UserRole.Admin;
+            var totalAdmins = await _context.Users.CountAsync(u => u.Role == UserRole.Admin);
 
             // Convierte el string a enum para la comparación
-            Entities.UserRole parsedRole;
+            UserRole parsedRole;
             if (!Enum.TryParse(dto.Role, true, out parsedRole))
-                parsedRole = Entities.UserRole.Pending;
+                parsedRole = UserRole.Pending;
 
-            if (isAdmin && totalAdmins == 1 && parsedRole != Entities.UserRole.Admin)
+            if (isAdmin && totalAdmins == 1 && parsedRole != UserRole.Admin)
             {
                 return BadRequest(new
                 {
@@ -87,8 +88,8 @@ namespace norviguet_control_fletes_api.Controllers
                 return NotFound();
 
             // Validación: no eliminar el único admin
-            var isAdmin = user.Role == Entities.UserRole.Admin;
-            var totalAdmins = await _context.Users.CountAsync(u => u.Role == Entities.UserRole.Admin);
+            var isAdmin = user.Role == UserRole.Admin;
+            var totalAdmins = await _context.Users.CountAsync(u => u.Role == UserRole.Admin);
             if (isAdmin && totalAdmins == 1)
             {
                 return BadRequest(new
@@ -112,8 +113,8 @@ namespace norviguet_control_fletes_api.Controllers
                 return NotFound();
 
             // Validación: no eliminar todos los admins
-            var adminIdsToDelete = users.Where(u => u.Role == Entities.UserRole.Admin).Select(u => u.Id).ToList();
-            var totalAdmins = await _context.Users.CountAsync(u => u.Role == Entities.UserRole.Admin);
+            var adminIdsToDelete = users.Where(u => u.Role == UserRole.Admin).Select(u => u.Id).ToList();
+            var totalAdmins = await _context.Users.CountAsync(u => u.Role == UserRole.Admin);
             if (adminIdsToDelete.Count > 0 && totalAdmins - adminIdsToDelete.Count < 1)
             {
                 return BadRequest(new

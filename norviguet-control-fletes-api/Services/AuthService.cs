@@ -2,8 +2,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using norviguet_control_fletes_api.Data;
-using norviguet_control_fletes_api.Entities;
-using norviguet_control_fletes_api.Models.Auth;
+using norviguet_control_fletes_api.Models.DTOs.Auth;
+using norviguet_control_fletes_api.Models.Entities;
+using norviguet_control_fletes_api.Services.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -11,7 +12,7 @@ using System.Text;
 
 namespace norviguet_control_fletes_api.Services
 {
-    public class AuthService(NorviguetDbContext context, IConfiguration configuration) : IAuthService
+    public class AuthService(ApplicationDbContext context, IConfiguration configuration) : IAuthService
     {
         public async Task<TokenResponseDto?> LoginAsync(LoginDto request)
         {

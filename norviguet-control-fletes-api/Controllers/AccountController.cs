@@ -3,10 +3,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
-using norviguet_control_fletes_api.Entities;
-using norviguet_control_fletes_api.Models.Account;
-using norviguet_control_fletes_api.Models.User;
-using norviguet_control_fletes_api.Services;
+using norviguet_control_fletes_api.Models.DTOs.Account;
+using norviguet_control_fletes_api.Models.DTOs.User;
+using norviguet_control_fletes_api.Models.Entities;
+using norviguet_control_fletes_api.Services.Interfaces;
 
 namespace norviguet_control_fletes_api.Controllers
 {
@@ -16,11 +16,11 @@ namespace norviguet_control_fletes_api.Controllers
     public class AccountController : ControllerBase
     {
         private readonly IAuthService _authService;
-        private readonly NorviguetDbContext _context;
+        private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly IBlobStorageService _blobStorageService;
 
-        public AccountController(IAuthService authService, NorviguetDbContext context, IMapper mapper, IBlobStorageService blobStorageService)
+        public AccountController(IAuthService authService, ApplicationDbContext context, IMapper mapper, IBlobStorageService blobStorageService)
         {
             _authService = authService;
             _context = context;

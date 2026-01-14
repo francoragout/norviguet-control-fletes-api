@@ -4,7 +4,9 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using norviguet_control_fletes_api.Controllers;
 using norviguet_control_fletes_api.Data;
-using norviguet_control_fletes_api.Profiles;
+using norviguet_control_fletes_api.Models.DTOs.Carrier;
+using norviguet_control_fletes_api.Models.Entities;
+using norviguet_control_fletes_api.Models.Profiles;
 using norviguet_control_fletes_api.Repositories;
 using norviguet_control_fletes_api.Services;
 
@@ -13,17 +15,17 @@ namespace norviguet_control_fletes_api.Tests.Controllers
     public class CarrierControllerTests
     {
         private readonly CarrierController _controller;
-        private readonly NorviguetDbContext _context;
+        private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly ICarrierService _carrierService;
         private readonly ICarrierRepository _carrierRepository;
 
         public CarrierControllerTests()
         {
-            var options = new DbContextOptionsBuilder<NorviguetDbContext>()
+            var options = new DbContextOptionsBuilder<ApplicationDbContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
-            _context = new NorviguetDbContext(options);
+            _context = new ApplicationDbContext(options);
 
             var config = new MapperConfiguration(cfg =>
             {
@@ -50,7 +52,7 @@ namespace norviguet_control_fletes_api.Tests.Controllers
 
             // Assert
             var okResult = Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result.Result);
-            var carriers = Assert.IsType<List<Models.Carrier.CarrierDto>>(okResult.Value);
+            var carriers = Assert.IsType<List<CarrierDto>>(okResult.Value);
             Assert.Single(carriers);
             Assert.Equal("Test Carrier", carriers[0].Name);
         }
@@ -67,7 +69,7 @@ namespace norviguet_control_fletes_api.Tests.Controllers
 
             // Assert
             var okResult = Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result.Result);
-            var carrier = Assert.IsType<Models.Carrier.CarrierDto>(okResult.Value);
+            var carrier = Assert.IsType<CarrierDto>(okResult.Value);
             Assert.Equal("Test Carrier", carrier.Name);
         }
 
@@ -180,9 +182,9 @@ namespace norviguet_control_fletes_api.Tests.Controllers
             {
                 Id = 1,
                 Name = "Carrier with records",
-                DeliveryNotes = new List<Entities.DeliveryNote>(),
-                PaymentOrders = new List<Entities.PaymentOrder>(),
-                Invoices = new List<Entities.Invoice>()
+                DeliveryNotes = new List<DeliveryNote>(),
+                PaymentOrders = new List<PaymentOrder>(),
+                Invoices = new List<Invoice>()
             };
 
             var deliveryNote = new Entities.DeliveryNote
@@ -271,9 +273,9 @@ namespace norviguet_control_fletes_api.Tests.Controllers
             {
                 Id = 1,
                 Name = "Carrier with records",
-                DeliveryNotes = new List<Entities.DeliveryNote>(),
-                PaymentOrders = new List<Entities.PaymentOrder>(),
-                Invoices = new List<Entities.Invoice>()
+                DeliveryNotes = new List<DeliveryNote>(),
+                PaymentOrders = new List<PaymentOrder>(),
+                Invoices = new List<Invoice>()
             };
             var deliveryNote = new Entities.DeliveryNote
             {

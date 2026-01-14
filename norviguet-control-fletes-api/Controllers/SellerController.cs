@@ -3,8 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
-using norviguet_control_fletes_api.Models.Common;
-using norviguet_control_fletes_api.Models.Seller;
+using norviguet_control_fletes_api.Models.DTOs.Common;
+using norviguet_control_fletes_api.Models.DTOs.Seller;
+using norviguet_control_fletes_api.Models.Entities;
 
 namespace norviguet_control_fletes_api.Controllers
 {
@@ -13,10 +14,10 @@ namespace norviguet_control_fletes_api.Controllers
     [Authorize]
     public class SellerController : ControllerBase
     {
-        private readonly NorviguetDbContext _context;
+        private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
 
-        public SellerController(NorviguetDbContext context, IMapper mapper)
+        public SellerController(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
@@ -45,7 +46,7 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Logistics")]
         public async Task<IActionResult> CreateSeller([FromBody] CreateSellerDto dto)
         {
-            var seller = _mapper.Map<Entities.Seller>(dto);
+            var seller = _mapper.Map<Seller>(dto);
             _context.Sellers.Add(seller);
             await _context.SaveChangesAsync();
             return Ok();

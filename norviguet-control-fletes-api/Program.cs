@@ -4,13 +4,13 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using norviguet_control_fletes_api.Data;
-using norviguet_control_fletes_api.Repositories;
 using norviguet_control_fletes_api.Services;
 using Scalar.AspNetCore;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Storage.Blobs;
+using norviguet_control_fletes_api.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +27,7 @@ builder.Services.AddControllers()
 builder.Services.AddOpenApi();
 
 // Use the same connection string key as in appsettings.json ("norviguetDB")
-builder.Services.AddDbContext<NorviguetDbContext>(options =>
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
        options.UseSqlServer(builder.Configuration.GetConnectionString("norviguetDB")));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -47,7 +47,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<ICarrierService, CarrierService>();
 
 // Registro de BlobServiceClient
 builder.Services.AddSingleton(x =>
@@ -59,7 +58,6 @@ builder.Services.AddSingleton(x =>
         builder.Configuration["AzureStorage:ContainerName"]));
 // Registro de tu servicio de blobs
 builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
-builder.Services.AddScoped<ICarrierRepository, CarrierRepository>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 
@@ -99,7 +97,7 @@ using (var scope = app.Services.CreateScope())
 {
     try
     {
-        var db = scope.ServiceProvider.GetRequiredService<NorviguetDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         db.Database.Migrate();
         Console.WriteLine("Database migrated/applied successfully.");
     }

@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using norviguet_control_fletes_api.Models.Auth;
-using norviguet_control_fletes_api.Services;
 using norviguet_control_fletes_api.Data;
+using norviguet_control_fletes_api.Models.DTOs.Auth;
+using norviguet_control_fletes_api.Services.Interfaces;
 
 namespace norviguet_control_fletes_api.Controllers
 {
@@ -12,12 +12,12 @@ namespace norviguet_control_fletes_api.Controllers
     {
         private readonly IAuthService _authService;
         private readonly IMapper _mapper;
-        private readonly NorviguetDbContext _context;
+        private readonly ApplicationDbContext _context;
 
         public AuthController(
             IAuthService authService,
             IMapper mapper,
-            NorviguetDbContext context)
+            ApplicationDbContext context)
         {
             _authService = authService;
             _mapper = mapper;

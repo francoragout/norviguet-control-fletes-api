@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
-using norviguet_control_fletes_api.Entities;
-using norviguet_control_fletes_api.Models.Common;
-using norviguet_control_fletes_api.Models.DeliveryNote;
+using norviguet_control_fletes_api.Models.DTOs.Common;
+using norviguet_control_fletes_api.Models.DTOs.DeliveryNote;
+using norviguet_control_fletes_api.Models.Entities;
 using norviguet_control_fletes_api.Services;
 
 namespace norviguet_control_fletes_api.Controllers
@@ -15,10 +15,10 @@ namespace norviguet_control_fletes_api.Controllers
     [Authorize]
     public class DeliveryNoteController : ControllerBase
     {
-        private readonly NorviguetDbContext _context;
+        private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
 
-        public DeliveryNoteController(NorviguetDbContext context, IMapper mapper)
+        public DeliveryNoteController(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;

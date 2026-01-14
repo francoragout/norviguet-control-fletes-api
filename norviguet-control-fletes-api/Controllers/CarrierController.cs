@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using norviguet_control_fletes_api.Models.Carrier;
-using norviguet_control_fletes_api.Models.Common;
+using norviguet_control_fletes_api.Models.DTOs.Carrier;
+using norviguet_control_fletes_api.Models.DTOs.Common;
 using norviguet_control_fletes_api.Services;
 
 namespace norviguet_control_fletes_api.Controllers

@@ -2,23 +2,25 @@
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Controllers;
 using norviguet_control_fletes_api.Data;
-using norviguet_control_fletes_api.Profiles;
+using norviguet_control_fletes_api.Models.DTOs.Customer;
+using norviguet_control_fletes_api.Models.Entities;
+using norviguet_control_fletes_api.Models.Profiles;
 
 namespace norviguet_control_fletes_api.Tests.Controllers
 {
     public class CustomerControllerTests
     {
         private readonly CustomerController _controller;
-        private readonly NorviguetDbContext _context;
+        private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
 
         public CustomerControllerTests()
         {
             // Configurar DB en memoria
-            var options = new DbContextOptionsBuilder<NorviguetDbContext>()
+            var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
-            _context = new NorviguetDbContext(options);
+            _context = new ApplicationDbContext(options);
 
             // Configurar AutoMapper
             var config = new MapperConfiguration(cfg =>
@@ -44,7 +46,7 @@ namespace norviguet_control_fletes_api.Tests.Controllers
             var result = await _controller.GetCustomers();
             // Assert
             var okResult = Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result.Result);
-            var customers = Assert.IsType<List<Models.Customer.CustomerDto>>(okResult.Value);
+            var customers = Assert.IsType<List<CustomerDto>>(okResult.Value);
             Assert.Equal(2, customers.Count);
         }
 
@@ -68,7 +70,7 @@ namespace norviguet_control_fletes_api.Tests.Controllers
             var result = await _controller.GetCustomer(1);
             // Assert
             var okResult = Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result.Result);
-            var returnedCustomer = Assert.IsType<Models.Customer.CustomerDto>(okResult.Value);
+            var returnedCustomer = Assert.IsType<CustomerDto>(okResult.Value);
             Assert.Equal(customer.Id, returnedCustomer.Id);
             Assert.Equal(customer.Name, returnedCustomer.Name);
             Assert.Equal(customer.CUIT, returnedCustomer.CUIT);
@@ -162,7 +164,7 @@ namespace norviguet_control_fletes_api.Tests.Controllers
                 Id = 1,
                 Name = "Customer with orders",
                 CUIT = "20-12345678-9",
-                Orders = new List<Entities.Order>()
+                Orders = new List<Order>()
             };
 
             var seller = new Entities.Seller

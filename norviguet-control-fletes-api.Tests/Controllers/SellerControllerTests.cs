@@ -7,26 +7,28 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Controllers;
 using norviguet_control_fletes_api.Data;
-using norviguet_control_fletes_api.Profiles;
 using norviguet_control_fletes_api.Models.Seller;
 using norviguet_control_fletes_api.Models.Common;
 using norviguet_control_fletes_api.Entities;
 using Xunit;
+using norviguet_control_fletes_api.Models.DTOs.Seller;
+using norviguet_control_fletes_api.Models.Entities;
+using norviguet_control_fletes_api.Models.Profiles;
 
 namespace norviguet_control_fletes_api.Tests.Controllers
 {
     public class SellerControllerTests
     {
         private readonly SellerController _controller;
-        private readonly NorviguetDbContext _context;
+        private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
 
         public SellerControllerTests()
         {
-            var options = new DbContextOptionsBuilder<NorviguetDbContext>()
+            var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
-            _context = new NorviguetDbContext(options);
+            _context = new ApplicationDbContext(options);
 
             var config = new MapperConfiguration(cfg =>
             {

@@ -3,27 +3,28 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using norviguet_control_fletes_api.Controllers;
 using norviguet_control_fletes_api.Data;
-using norviguet_control_fletes_api.Entities;
 using norviguet_control_fletes_api.Models.Common;
 using norviguet_control_fletes_api.Models.Invoice;
-using norviguet_control_fletes_api.Profiles;
 using norviguet_control_fletes_api.Services;
 using Microsoft.AspNetCore.Mvc;
+using norviguet_control_fletes_api.Models.DTOs.Invoice;
+using norviguet_control_fletes_api.Models.Entities;
+using norviguet_control_fletes_api.Models.Profiles;
 
 namespace norviguet_control_fletes_api.Tests.Controllers
 {
     public class InvoiceControllerTests
     {
         private readonly InvoiceController _controller;
-        private readonly NorviguetDbContext _context;
+        private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
 
         public InvoiceControllerTests()
         {
-            var options = new DbContextOptionsBuilder<NorviguetDbContext>()
+            var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
-            _context = new NorviguetDbContext(options);
+            _context = new ApplicationDbContext(options);
 
             var config = new MapperConfiguration(cfg =>
             {

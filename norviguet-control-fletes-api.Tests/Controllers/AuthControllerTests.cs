@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using norviguet_control_fletes_api.Controllers;
 using norviguet_control_fletes_api.Data;
-using norviguet_control_fletes_api.Entities;
-using norviguet_control_fletes_api.Models.Auth;
-using norviguet_control_fletes_api.Profiles;
+using norviguet_control_fletes_api.Models.DTOs.Auth;
+using norviguet_control_fletes_api.Models.Entities;
+using norviguet_control_fletes_api.Models.Profiles;
 using norviguet_control_fletes_api.Services;
 
 namespace norviguet_control_fletes_api.Tests
@@ -17,14 +17,14 @@ namespace norviguet_control_fletes_api.Tests
         private readonly AuthController _controller;
         private readonly Mock<IAuthService> _authMock;
         private readonly IMapper _mapper;
-        private readonly NorviguetDbContext _context;
+        private readonly ApplicationDbContext _context;
 
         public AuthControllerTests()
         {
-            var options = new DbContextOptionsBuilder<NorviguetDbContext>()
+            var options = new DbContextOptionsBuilder<ApplicationDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString())
                 .Options;
-            _context = new NorviguetDbContext(options);
+            _context = new ApplicationDbContext(options);
 
             _authMock = new Mock<IAuthService>();
 

@@ -4,10 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using norviguet_control_fletes_api.Controllers;
 using norviguet_control_fletes_api.Data;
-using norviguet_control_fletes_api.Entities;
 using norviguet_control_fletes_api.Models.Common;
-using norviguet_control_fletes_api.Models.User;
-using norviguet_control_fletes_api.Profiles;
+using norviguet_control_fletes_api.Models.DTOs.User;
+using norviguet_control_fletes_api.Models.Entities;
+using norviguet_control_fletes_api.Models.Profiles;
 using Xunit;
 
 namespace norviguet_control_fletes_api.Tests
@@ -15,17 +15,17 @@ namespace norviguet_control_fletes_api.Tests
     public class UserControllerTests
     {
         private readonly UserController _controller;
-        private readonly NorviguetDbContext _context;
+        private readonly ApplicationDbContext _context;
         private readonly Mock<IBlobStorageService> _blobMock;
         private readonly IMapper _mapper;
 
         public UserControllerTests()
         {
             // Configuración de la base de datos en memoria
-            var options = new DbContextOptionsBuilder<NorviguetDbContext>()
+            var options = new DbContextOptionsBuilder<ApplicationDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString())
                 .Options;
-            _context = new NorviguetDbContext(options);
+            _context = new ApplicationDbContext(options);
 
             // Mock del servicio de blobs
             _blobMock = new Mock<IBlobStorageService>();

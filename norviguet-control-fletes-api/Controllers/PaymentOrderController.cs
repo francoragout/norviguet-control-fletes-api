@@ -3,10 +3,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
-using norviguet_control_fletes_api.Entities;
-using norviguet_control_fletes_api.Models.Common;
-using norviguet_control_fletes_api.Models.Invoice;
-using norviguet_control_fletes_api.Models.Payment;
+using norviguet_control_fletes_api.Models.DTOs.Common;
+using norviguet_control_fletes_api.Models.DTOs.Invoice;
+using norviguet_control_fletes_api.Models.DTOs.PaymentOrder;
+using norviguet_control_fletes_api.Models.Entities;
 
 namespace norviguet_control_fletes_api.Controllers
 {
@@ -15,10 +15,10 @@ namespace norviguet_control_fletes_api.Controllers
     [Authorize]
     public class PaymentOrderController : ControllerBase
     {
-        private readonly NorviguetDbContext _context;
+        private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
 
-        public PaymentOrderController(NorviguetDbContext context, IMapper mapper)
+        public PaymentOrderController(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
