@@ -9,6 +9,5 @@ namespace norviguet_control_fletes_api.Models.DTOs.Account
         [MaxLength(30, ErrorMessage = "Name cannot exceed 30 characters.")]
         [RegularExpression(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s'-]+$", ErrorMessage = "Name can only contain letters and spaces.")]
         public string Name { get; set; } = string.Empty;
-        public IFormFile? Image { get; set; }
     }
 }

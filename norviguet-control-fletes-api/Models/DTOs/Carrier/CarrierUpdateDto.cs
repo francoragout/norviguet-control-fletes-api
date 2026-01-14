@@ -2,7 +2,7 @@
 
 namespace norviguet_control_fletes_api.Models.DTOs.Carrier
 {
-    public class CreateCarrierDto
+    public class CarrierUpdateDto
     {
         [Required]
         [StringLength(50, ErrorMessage = "The name must be between 1 and 50 characters long.")]

@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
-using norviguet_control_fletes_api.Models.DTOs.Common;
 using norviguet_control_fletes_api.Models.DTOs.Customer;
 using norviguet_control_fletes_api.Models.Entities;
 
@@ -86,35 +85,14 @@ namespace norviguet_control_fletes_api.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
-
-        [HttpDelete("bulk")]
-        [Authorize(Roles = "Admin, Logistics")]
-        public async Task<IActionResult> DeleteCustomersBulk([FromBody] DeleteEntitiesDto dto)
+        [HttpPost("bulk-delete")]
+        public async Task<IActionResult> DeleteBulk([FromBody] List<int> ids)
         {
-            var customers = await _context.Customers
-                .Where(c => dto.Ids.Contains(c.Id))
-                .Include(c => c.Orders)
-                .ToListAsync();
+            if (ids == null || ids.Count == 0)
+                return BadRequest("Se requiere una lista de IDs.");
 
-            if (!customers.Any())
-                return NotFound();
-
-            var cannotDelete = customers
-                .Where(c => c.Orders?.Any() == true)
-                .ToList();
-
-            if (cannotDelete.Any())
-            {
-                return Conflict(new
-                {
-                    code = "ASSOCIATED_RECORDS",
-                    message = "Some customers could not be deleted because they have associated orders."
-                });
-            }
-
-            _context.Customers.RemoveRange(customers);
-            await _context.SaveChangesAsync();
-            return NoContent();
+            await service.DeleteBulkAsync(ids);
+            return NoContent(); // 204 No Content es el estándar para borrados exitosos
         }
     }
 }

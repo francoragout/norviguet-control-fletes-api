@@ -16,13 +16,11 @@ namespace norviguet_control_fletes_api.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
-        private readonly IBlobStorageService _blobStorageService;
 
-        public UserController(ApplicationDbContext context, IMapper mapper, IBlobStorageService blobStorageService)
+        public UserController(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
-            _blobStorageService = blobStorageService;
         }
 
         [HttpGet]
@@ -30,19 +28,6 @@ namespace norviguet_control_fletes_api.Controllers
         {
             var users = await _context.Users.ToListAsync();
             var result = _mapper.Map<List<UserDto>>(users);
-
-            foreach (var user in result)
-            {
-                if (!string.IsNullOrEmpty(user.ImageUrl))
-                {
-                    var fileName = Uri.IsWellFormedUriString(user.ImageUrl, UriKind.Absolute)
-                        ? Path.GetFileName(new Uri(user.ImageUrl).LocalPath)
-                        : user.ImageUrl;
-
-                    user.ImageUrl = _blobStorageService.GetBlobSasUrl(fileName);
-                }
-            }
-
             return Ok(result);
         }
 

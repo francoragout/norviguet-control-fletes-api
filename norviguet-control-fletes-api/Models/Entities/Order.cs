@@ -1,18 +1,6 @@
-﻿namespace norviguet_control_fletes_api.Models.Entities
+﻿using norviguet_control_fletes_api.Models.Enums;
+namespace norviguet_control_fletes_api.Models.Entities
 {
-    public enum OrderStatus
-    {
-        Pending,
-        Rejected,
-        Closed,
-    }
-
-    public enum OrderIncoterm
-    {
-        FOB,
-        CIF
-    }
-
     public class Order
     {
         public int Id { get; set; }

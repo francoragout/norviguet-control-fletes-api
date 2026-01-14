@@ -1,13 +1,6 @@
-﻿namespace norviguet_control_fletes_api.Models.Entities
+﻿using norviguet_control_fletes_api.Models.Enums;
+namespace norviguet_control_fletes_api.Models.Entities
 {
-    public enum InvoiceType
-    {
-        A,
-        B,
-        C,
-        Z
-    }
-
     public class Invoice
     {
         public int Id { get; set; }

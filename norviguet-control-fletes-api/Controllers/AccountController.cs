@@ -18,14 +18,12 @@ namespace norviguet_control_fletes_api.Controllers
         private readonly IAuthService _authService;
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
-        private readonly IBlobStorageService _blobStorageService;
 
-        public AccountController(IAuthService authService, ApplicationDbContext context, IMapper mapper, IBlobStorageService blobStorageService)
+        public AccountController(IAuthService authService, ApplicationDbContext context, IMapper mapper)
         {
             _authService = authService;
             _context = context;
             _mapper = mapper;
-            _blobStorageService = blobStorageService;
         }
 
         [HttpGet]
@@ -42,21 +40,12 @@ namespace norviguet_control_fletes_api.Controllers
                 return NotFound();
 
             var result = _mapper.Map<UserDto>(user);
-            if (!string.IsNullOrEmpty(user.ImageUrl))
-            {
-                var fileName = Uri.IsWellFormedUriString(user.ImageUrl, UriKind.Absolute)
-                    ? Path.GetFileName(new Uri(user.ImageUrl).LocalPath)
-                    : user.ImageUrl;
-
-                result.ImageUrl = _blobStorageService.GetBlobSasUrl(fileName);
-            }
-
             return Ok(result);
         }
 
 
         [HttpPatch("profile")]
-        public async Task<IActionResult> UpdateProfile([FromForm] UpdateProfileDto dto)
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
         {
             var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "id");
             if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
@@ -69,51 +58,8 @@ namespace norviguet_control_fletes_api.Controllers
             if (!string.IsNullOrWhiteSpace(dto.Name))
                 user.Name = dto.Name;
 
-            if (dto.Image != null && dto.Image.Length > 0)
-            {
-                var fileName = $"user_{userId}_{Guid.NewGuid()}{Path.GetExtension(dto.Image.FileName)}";
-                using var stream = dto.Image.OpenReadStream();
-                var imageUrl = await _blobStorageService.UploadAsync(fileName, stream, dto.Image.ContentType);
-
-                if (!string.IsNullOrEmpty(user.ImageUrl))
-                {
-                    var oldFileName = Uri.IsWellFormedUriString(user.ImageUrl, UriKind.Absolute)
-                        ? Path.GetFileName(new Uri(user.ImageUrl).LocalPath)
-                        : user.ImageUrl;
-                    await _blobStorageService.DeleteAsync(oldFileName);
-                }
-
-                user.ImageUrl = imageUrl;
-            }
-
             await _context.SaveChangesAsync();
             return Ok(_mapper.Map<UserDto>(user));
-        }
-
-        [HttpDelete("image")]
-        public async Task<IActionResult> DeleteAccountImage()
-        {
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "id");
-            if (userIdClaim == null)
-                return Unauthorized();
-            if (!int.TryParse(userIdClaim.Value, out var userId))
-                return Unauthorized();
-
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null)
-                return NotFound();
-
-            if (!string.IsNullOrEmpty(user.ImageUrl))
-            {
-                var fileName = Uri.IsWellFormedUriString(user.ImageUrl, UriKind.Absolute)
-                    ? Path.GetFileName(new Uri(user.ImageUrl).LocalPath)
-                    : user.ImageUrl;
-                await _blobStorageService.DeleteAsync(fileName);
-                user.ImageUrl = null;
-                await _context.SaveChangesAsync();
-            }
-
-            return NoContent();
         }
 
         [HttpPost("change-password")]

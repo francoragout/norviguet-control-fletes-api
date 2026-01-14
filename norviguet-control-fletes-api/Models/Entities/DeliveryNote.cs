@@ -1,12 +1,6 @@
-﻿namespace norviguet_control_fletes_api.Models.Entities
+﻿using norviguet_control_fletes_api.Models.Enums;
+namespace norviguet_control_fletes_api.Models.Entities
 {
-    public enum DeliveryNoteStatus
-    {
-        Pending,
-        Cancelled,
-        Approved,
-    }
-
     public class DeliveryNote
     {
         public int Id { get; set; }

@@ -9,8 +9,8 @@ namespace norviguet_control_fletes_api.Models.Profiles
         public CarrierProfile()
         {
             CreateMap<Carrier, CarrierDto>();
-            CreateMap<CreateCarrierDto, Carrier>();
-            CreateMap<UpdateCarrierDto, Carrier>();
+            CreateMap<CarrierCreateDto, Carrier>();
+            CreateMap<CarrierUpdateDto, Carrier>();
         }
     }
 }

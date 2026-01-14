@@ -9,7 +9,6 @@ using Scalar.AspNetCore;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Azure.Storage.Blobs;
 using norviguet_control_fletes_api.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -47,17 +46,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddScoped<IAuthService, AuthService>();
-
-// Registro de BlobServiceClient
-builder.Services.AddSingleton(x =>
-    new BlobServiceClient(builder.Configuration["AzureStorage:ConnectionString"]));
-// Si necesitas el contenedor directamente:
-builder.Services.AddSingleton(x =>
-    new BlobContainerClient(
-        builder.Configuration["AzureStorage:ConnectionString"],
-        builder.Configuration["AzureStorage:ContainerName"]));
-// Registro de tu servicio de blobs
-builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 
