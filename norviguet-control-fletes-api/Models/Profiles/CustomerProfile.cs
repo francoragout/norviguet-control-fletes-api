@@ -9,8 +9,8 @@ namespace norviguet_control_fletes_api.Models.Profiles
         public CustomerProfile()
         {
             CreateMap<Customer, CustomerDto>();
-            CreateMap<CreateCustomerDto, Customer>();
-            CreateMap<UpdateCustomerDto, Customer>();
+            CreateMap<CustomerCreateDto, Customer>();
+            CreateMap<CustomerUpdateDto, Customer>();
         }
     }
 }

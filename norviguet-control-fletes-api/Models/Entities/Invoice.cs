@@ -1,5 +1,4 @@
-﻿using norviguet_control_fletes_api.Models.Commons;
-using norviguet_control_fletes_api.Models.Enums;
+﻿using norviguet_control_fletes_api.Models.Enums;
 
 namespace norviguet_control_fletes_api.Models.Entities
 {

@@ -1,6 +1,4 @@
-﻿using norviguet_control_fletes_api.Models.Commons;
-
-namespace norviguet_control_fletes_api.Models.Entities
+﻿namespace norviguet_control_fletes_api.Models.Entities
 {
     public class Seller : AuditableEntity
     {

@@ -1,4 +1,4 @@
-namespace norviguet_control_fletes_api.Models.Commons
+namespace norviguet_control_fletes_api.Models.Entities
 {
     public abstract class AuditableEntity : BaseEntity
     {

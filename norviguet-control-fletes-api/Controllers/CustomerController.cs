@@ -43,7 +43,7 @@ namespace norviguet_control_fletes_api.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin, Logistics")]
-        public async Task<IActionResult> CreateCustomer([FromBody] CreateCustomerDto dto)
+        public async Task<IActionResult> CreateCustomer([FromBody] CustomerCreateDto dto)
         {
             var customer = _mapper.Map<Customer>(dto);
             _context.Customers.Add(customer);
@@ -53,7 +53,7 @@ namespace norviguet_control_fletes_api.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin, Logistics")]
-        public async Task<IActionResult> UpdateCustomer(int id, [FromBody] UpdateCustomerDto dto)
+        public async Task<IActionResult> UpdateCustomer(int id, [FromBody] CustomerUpdateDto dto)
         {
             var customer = await _context.Customers.FindAsync(id);
             if (customer == null)

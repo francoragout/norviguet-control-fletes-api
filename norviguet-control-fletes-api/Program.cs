@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using norviguet_control_fletes_api.Services.Interfaces;
+using norviguet_control_fletes_api.Common.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -94,6 +95,8 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"Error applying migrations: {ex.Message}");
     }
 }
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
