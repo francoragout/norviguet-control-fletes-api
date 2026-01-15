@@ -1,11 +1,10 @@
-﻿using norviguet_control_fletes_api.Models.Enums;
+﻿using norviguet_control_fletes_api.Models.Commons;
+using norviguet_control_fletes_api.Models.Enums;
+
 namespace norviguet_control_fletes_api.Models.Entities
 {
-    public class Order
+    public class Order : AuditableEntity
     {
-        public int Id { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public OrderStatus Status { get; set; } = OrderStatus.Pending;
         public string OrderNumber { get; set; } = string.Empty;
         public OrderIncoterm Incoterm { get; set; } = OrderIncoterm.CIF;
 

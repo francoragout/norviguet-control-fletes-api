@@ -1,8 +1,9 @@
-﻿namespace norviguet_control_fletes_api.Models.Entities
+﻿using norviguet_control_fletes_api.Models.Commons;
+
+namespace norviguet_control_fletes_api.Models.Entities
 {
-    public class Customer
+    public class Customer : AuditableEntity
     {
-        public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string CUIT { get; set; } = string.Empty;
         public string? BusinessName { get; set; }

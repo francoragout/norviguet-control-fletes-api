@@ -1,10 +1,9 @@
-﻿using norviguet_control_fletes_api.Models.Enums;
+﻿using norviguet_control_fletes_api.Models.Commons;
+using norviguet_control_fletes_api.Models.Enums;
 namespace norviguet_control_fletes_api.Models.Entities
 {
-    public class User
+    public class User : AuditableEntity
     {
-        public int Id { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string Name { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty;

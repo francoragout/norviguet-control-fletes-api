@@ -1,9 +1,9 @@
-﻿namespace norviguet_control_fletes_api.Models.Entities
+﻿using norviguet_control_fletes_api.Models.Commons;
+
+namespace norviguet_control_fletes_api.Models.Entities
 {
-    public class PaymentOrder
+    public class PaymentOrder : AuditableEntity
     {
-        public int Id { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string PaymentOrderNumber { get; set; } = string.Empty;
 
         // Foreign Keys

@@ -1,6 +1,3 @@
 @norviguet_control_fletes_api_HostAddress = http://localhost:5029
 
-GET {{norviguet_control_fletes_api_HostAddress}}/weatherforecast/
-Accept: application/json
-
 ###

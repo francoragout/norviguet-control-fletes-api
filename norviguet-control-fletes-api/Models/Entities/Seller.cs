@@ -1,8 +1,9 @@
-﻿namespace norviguet_control_fletes_api.Models.Entities
+﻿using norviguet_control_fletes_api.Models.Commons;
+
+namespace norviguet_control_fletes_api.Models.Entities
 {
-    public class Seller
+    public class Seller : AuditableEntity
     {
-        public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? Zone { get; set; }
 
