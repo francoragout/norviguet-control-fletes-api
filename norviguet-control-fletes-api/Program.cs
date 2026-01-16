@@ -1,5 +1,6 @@
 using norviguet_control_fletes_api.Extensions;
 using norviguet_control_fletes_api.Common.Middleware;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,9 +16,14 @@ builder.Services.AddCorsConfiguration();
 // Configure the HTTP request pipeline
 var app = builder.Build();
 
-app.ApplyMigrations();
 app.UseMiddleware<GlobalExceptionMiddleware>();
-app.UseSwaggerConfiguration(app.Environment);
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.MapScalarApiReference();
+}
+
 app.UseHttpsRedirection();
 app.UseCors("AllowSpecificOrigin");
 app.UseAuthentication();

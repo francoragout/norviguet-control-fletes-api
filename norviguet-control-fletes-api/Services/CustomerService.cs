@@ -1,12 +1,14 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using norviguet_control_fletes_api.Common.Middlewares;
 using norviguet_control_fletes_api.Data;
 using norviguet_control_fletes_api.Models.DTOs.Customer;
 using norviguet_control_fletes_api.Models.Entities;
+using norviguet_control_fletes_api.Services.Interfaces;
 
 namespace norviguet_control_fletes_api.Services
 {
-    public class CustomerService(ApplicationDbContext context, IMapper mapper)
+    public class CustomerService(ApplicationDbContext context, IMapper mapper) : ICustomerService
     {
         public async Task<IReadOnlyList<CustomerDto>> GetAllAsync()
         {
@@ -21,7 +23,7 @@ namespace norviguet_control_fletes_api.Services
             var customer = await context.Customers
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == id)
-                ?? throw new KeyNotFoundException("Customer not found");
+                ?? throw new NotFoundException("Customer not found");
             return mapper.Map<CustomerDto>(customer);
         }
 
@@ -37,7 +39,7 @@ namespace norviguet_control_fletes_api.Services
         {
             var customer = await context.Customers
                 .FirstOrDefaultAsync(x => x.Id == id)
-                ?? throw new KeyNotFoundException("Customer not found");
+                ?? throw new NotFoundException("Customer not found");
             mapper.Map(dto, customer);
             await context.SaveChangesAsync();
             return mapper.Map<CustomerDto>(customer);
@@ -48,14 +50,23 @@ namespace norviguet_control_fletes_api.Services
             var customer = await context.Customers
                 .FirstOrDefaultAsync(x => x.Id == id)
                 ?? throw new KeyNotFoundException("Customer not found");
+            var hasOrders = await context.Orders
+                .AnyAsync(x => x.CustomerId == id);
+            if (hasOrders)
+                throw new ConflictException("Cannot delete customer because it is associated with one or more orders");
             context.Customers.Remove(customer);
             await context.SaveChangesAsync();
         }
 
         public async Task DeleteBulkAsync(IEnumerable<int> ids)
         {
+            var customerIds = ids.ToList();
+            var hasOrders = await context.Orders
+                .AnyAsync(x => customerIds.Contains(x.CustomerId));
+            if (hasOrders)
+                throw new ConflictException("Cannot delete customers because one or more are associated with orders");
             await context.Customers
-                .Where(x => ids.Contains(x.Id))
+                .Where(x => customerIds.Contains(x.Id))
                 .ExecuteDeleteAsync();
         }
     }
