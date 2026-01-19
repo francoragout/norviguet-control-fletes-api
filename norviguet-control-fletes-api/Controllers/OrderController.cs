@@ -1,167 +1,99 @@
-﻿using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using norviguet_control_fletes_api.Data;
 using norviguet_control_fletes_api.Models.DTOs.Common;
 using norviguet_control_fletes_api.Models.DTOs.Order;
-using norviguet_control_fletes_api.Models.Entities;
-using norviguet_control_fletes_api.Services;
+using norviguet_control_fletes_api.Services.Interfaces;
 
 namespace norviguet_control_fletes_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
-    public class OrderController : ControllerBase
+    public class OrderController(IOrderService service) : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        private readonly IMapper _mapper;
-
-        public OrderController(
-            ApplicationDbContext context,
-            IMapper mapper)
-        {
-            _context = context;
-            _mapper = mapper;
-        }
-
+        /// <summary>
+        /// Gets a paginated list of orders.
+        /// </summary>
         [HttpGet]
-        public async Task<ActionResult<List<OrderDto>>> GetOrders()
+        [ProducesResponseType(typeof(PagedResultDto<OrderDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PagedResultDto<OrderDto>>> GetAll([FromQuery] PagedRequestDto request, CancellationToken cancellationToken)
         {
-            var orders = await _context.Orders
-                .Include(o => o.Seller)
-                .Include(o => o.Customer)
-                .Include(o => o.DeliveryNotes)
-                .Include(o => o.Invoices)
-                .Include(o => o.PaymentOrders)
-                .ToListAsync();
-            var result = _mapper.Map<List<OrderDto>>(orders);
+            var result = await service.GetAllAsync(request, cancellationToken);
             return Ok(result);
         }
 
+        /// <summary>
+        /// Gets an order by ID.
+        /// </summary>
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin, Logistics")]
-        public async Task<ActionResult<OrderDto>> GetOrder(int id)
+        [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<OrderDto>> GetById(int id, CancellationToken cancellationToken)
         {
-            var order = await _context.Orders
-                .Include(o => o.Seller)
-                .Include(o => o.Customer)
-                .FirstOrDefaultAsync(o => o.Id == id);
-            if (order == null)
-                return NotFound();
-            var result = _mapper.Map<OrderDto>(order);
+            var result = await service.GetByIdAsync(id, cancellationToken);
             return Ok(result);
         }
 
+        /// <summary>
+        /// Creates a new order.
+        /// </summary>
         [HttpPost]
-        [Authorize(Roles = "Admin, Logistics")]
-        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderDto dto)
+        [ProducesResponseType(typeof(OrderDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        public async Task<ActionResult<OrderDto>> Create([FromBody] OrderCreateDto dto, CancellationToken cancellationToken)
         {
-            if (await _context.Orders.AnyAsync(o => o.OrderNumber == dto.OrderNumber))
-                return Conflict(new
-                {
-                    code = "ORDER_NUMBER_ALREADY_EXISTS",
-                    message = "Order number already exists."
-                });
-
-            var order = _mapper.Map<Order>(dto);
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            var result = await service.CreateAsync(dto, cancellationToken);
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
 
-
+        /// <summary>
+        /// Updates an existing order.
+        /// </summary>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin, Logistics")]
-        public async Task<IActionResult> UpdateOrder(int id, [FromBody] UpdateOrderDto dto)
+        [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        public async Task<ActionResult<OrderDto>> Update(int id, [FromBody] OrderUpdateDto dto, CancellationToken cancellationToken)
         {
-            var order = await _context.Orders.FindAsync(id);
-
-            if (order == null)
-                return NotFound();
-
-            if (await _context.Orders.AnyAsync(o => o.OrderNumber == dto.OrderNumber && o.Id != id))
-                return Conflict(new
-                {
-                    code = "ORDER_NUMBER_ALREADY_EXISTS",
-                    message = "Order number already exists."
-                });
-
-            if (order.Status == OrderStatus.Closed || order.Status == OrderStatus.Rejected)
-                return BadRequest(new
-                {
-                    code = "CLOSED_OR_REJECTED_ORDER",
-                    message = "Cannot update a closed or rejected order."
-                });
-
-
-            _mapper.Map(dto, order);
-            await _context.SaveChangesAsync();
-            return NoContent();
+            var result = await service.UpdateAsync(id, dto, cancellationToken);
+            return Ok(result);
         }
 
+        /// <summary>
+        /// Updates the status of an order.
+        /// </summary>
         [HttpPatch("{id}/status")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] UpdateOrderStatusDto dto)
+        [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<OrderDto>> UpdateStatus(int id, [FromBody] OrderStatusUpdateDto dto, CancellationToken cancellationToken)
         {
-            var order = await _context.Orders.FindAsync(id);
-            if (order == null)
-                return NotFound();
-
-            _mapper.Map(dto, order);
-
-            await _context.SaveChangesAsync();
-            return NoContent();
+            var result = await service.UpdateStatusAsync(id, dto, cancellationToken);
+            return Ok(result);
         }
 
-
+        /// <summary>
+        /// Deletes an order by ID.
+        /// </summary>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteOrder(int id)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> Delete(int id, CancellationToken cancellationToken)
         {
-            var order = await _context.Orders.FindAsync(id);
-            if (order == null)
-                return NotFound();
-
-            if (order.Status == OrderStatus.Closed)
-                return BadRequest(new
-                {
-                    code = "CLOSED_OR_REJECTED_ORDER",
-                    message = "Cannot delete a closed order."
-                });
-
-            _context.Orders.Remove(order);
-            await _context.SaveChangesAsync();
+            await service.DeleteAsync(id, cancellationToken);
             return NoContent();
         }
 
+        /// <summary>
+        /// Deletes multiple orders by their IDs.
+        /// </summary>
         [HttpDelete("bulk")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteOrdersBulk([FromBody] DeleteEntitiesDto dto)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult> DeleteBulk([FromBody] IEnumerable<int> ids, CancellationToken cancellationToken)
         {
-            var orders = await _context.Orders
-                .Where(o => dto.Ids.Contains(o.Id))
-                .ToListAsync();
-            if (orders.Count == 0)
-                return NotFound();
-
-            if (orders.Any(o => o.Status == OrderStatus.Closed))
-            {
-                return BadRequest(new
-                {
-                    code = "CLOSED_OR_REJECTED_ORDER",
-                    message = "Cannot delete orders that are closed."
-                });
-            }
-
-            var ordersToDelete = orders.Where(o => o.Status == OrderStatus.Rejected || o.Status == OrderStatus.Pending).ToList();
-            if (ordersToDelete.Count > 0)
-            {
-                _context.Orders.RemoveRange(ordersToDelete);
-                await _context.SaveChangesAsync();
-            }
+            await service.DeleteBulkAsync(ids, cancellationToken);
             return NoContent();
         }
     }

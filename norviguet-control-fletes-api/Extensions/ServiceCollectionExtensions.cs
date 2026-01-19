@@ -24,7 +24,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddDatabaseConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("norviguetDB")));
+            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
         return services;
     }

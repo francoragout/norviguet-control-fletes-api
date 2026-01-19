@@ -3,9 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using norviguet_control_fletes_api.Data;
-using norviguet_control_fletes_api.Models.DTOs.Common;
 using norviguet_control_fletes_api.Models.DTOs.User;
-using norviguet_control_fletes_api.Models.Entities;
+using norviguet_control_fletes_api.Models.Enums;
 
 namespace norviguet_control_fletes_api.Controllers
 {

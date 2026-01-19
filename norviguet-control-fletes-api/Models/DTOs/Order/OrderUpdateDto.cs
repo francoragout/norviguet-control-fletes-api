@@ -1,9 +1,9 @@
-using norviguet_control_fletes_api.Models.Entities;
+using norviguet_control_fletes_api.Models.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace norviguet_control_fletes_api.Models.DTOs.Order
 {
-    public class CreateOrderDto
+    public class OrderUpdateDto
     {
         [Required]
         public string OrderNumber { get; set; } = string.Empty;
