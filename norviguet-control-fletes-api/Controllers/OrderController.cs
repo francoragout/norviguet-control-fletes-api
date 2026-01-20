@@ -67,6 +67,7 @@ namespace norviguet_control_fletes_api.Controllers
         [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<ActionResult<OrderDto>> UpdateStatus(int id, [FromBody] OrderStatusUpdateDto dto, CancellationToken cancellationToken)
         {
             var result = await service.UpdateStatusAsync(id, dto, cancellationToken);
@@ -79,6 +80,7 @@ namespace norviguet_control_fletes_api.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<ActionResult> Delete(int id, CancellationToken cancellationToken)
         {
             await service.DeleteAsync(id, cancellationToken);
@@ -91,6 +93,7 @@ namespace norviguet_control_fletes_api.Controllers
         [HttpDelete("bulk")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<ActionResult> DeleteBulk([FromBody] IEnumerable<int> ids, CancellationToken cancellationToken)
         {
             await service.DeleteBulkAsync(ids, cancellationToken);

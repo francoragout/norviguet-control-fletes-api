@@ -1,5 +1,6 @@
 using System;
 using norviguet_control_fletes_api.Models.Entities;
+using norviguet_control_fletes_api.Models.Enums;
 
 namespace norviguet_control_fletes_api.Models.DTOs.DeliveryNote
 {
