@@ -67,13 +67,15 @@ namespace norviguet_control_fletes_api.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-
         public async Task<IActionResult> DeleteCarrier(int id, CancellationToken cancellationToken)
         {
             await service.DeleteAsync(id, cancellationToken);
             return NoContent();
         }
 
+        /// <summary>
+        /// Deletes multiple carriers by their IDs.
+        /// </summary>
         [HttpPost("bulk-delete")]
         public async Task<IActionResult> DeleteCarriersBulk([FromBody] List<int> ids, CancellationToken cancellationToken)
         {

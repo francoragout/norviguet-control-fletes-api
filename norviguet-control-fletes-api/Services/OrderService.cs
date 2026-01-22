@@ -13,9 +13,6 @@ namespace norviguet_control_fletes_api.Services
 {
     public class OrderService(ApplicationDbContext context, IMapper mapper) : IOrderService
     {
-        /// <summary>
-        /// Retrieves a paginated list of orders.
-        /// </summary>
         public async Task<PagedResultDto<OrderDto>> GetAllAsync(PagedRequestDto dto, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(dto);
@@ -41,9 +38,6 @@ namespace norviguet_control_fletes_api.Services
             };
         }
 
-        /// <summary>
-        /// Retrieves an order by its ID.
-        /// </summary>
         public async Task<OrderDto> GetByIdAsync(int id, CancellationToken cancellationToken)
         {
             var order = await context.Orders
@@ -55,9 +49,6 @@ namespace norviguet_control_fletes_api.Services
             return order;
         }
 
-        /// <summary>
-        /// Creates a new order.
-        /// </summary>
         public async Task<OrderDto> CreateAsync(OrderCreateDto dto, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(dto);
@@ -74,9 +65,6 @@ namespace norviguet_control_fletes_api.Services
             return mapper.Map<OrderDto>(order);
         }
 
-        /// <summary>
-        /// Updates an existing order.
-        /// </summary>
         public async Task<OrderDto> UpdateAsync(int id, OrderUpdateDto dto, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(dto);
@@ -102,9 +90,6 @@ namespace norviguet_control_fletes_api.Services
             return mapper.Map<OrderDto>(order);
         }
 
-        /// <summary>
-        /// Updates the status of an order.
-        /// </summary>
         public async Task<OrderDto> UpdateStatusAsync(int id, OrderStatusUpdateDto dto, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(dto);
@@ -122,9 +107,6 @@ namespace norviguet_control_fletes_api.Services
             return mapper.Map<OrderDto>(order);
         }
 
-        /// <summary>
-        /// Deletes an order by its ID.
-        /// </summary>
         public async Task DeleteAsync(int id, CancellationToken cancellationToken)
         {
             var rowsDeleted = await context.Orders
@@ -141,9 +123,6 @@ namespace norviguet_control_fletes_api.Services
             }
         }
 
-        /// <summary>
-        /// Deletes multiple orders by their IDs.
-        /// </summary>
         public async Task DeleteBulkAsync(IEnumerable<int> ids, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(ids);
