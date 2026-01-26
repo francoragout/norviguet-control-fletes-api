@@ -9,7 +9,6 @@ namespace norviguet_control_fletes_api.Services.Interfaces
         Task<CarrierDto> GetByIdAsync(int id, CancellationToken cancellationToken);
         Task<CarrierDto> CreateAsync(CarrierCreateDto dto, CancellationToken cancellationToken);
         Task<CarrierDto> UpdateAsync(int id, CarrierUpdateDto dto, CancellationToken cancellationToken);
-        Task DeleteAsync(int id, CancellationToken cancellationToken);
-        Task DeleteBulkAsync(IEnumerable<int> ids, CancellationToken cancellationToken);
+        Task DeleteAsync(IEnumerable<int> ids, CancellationToken cancellationToken);
     }
 }

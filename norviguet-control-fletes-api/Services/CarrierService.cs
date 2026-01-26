@@ -70,68 +70,36 @@ namespace norviguet_control_fletes_api.Services
             return mapper.Map<CarrierDto>(carrier);
         }
 
-        public async Task DeleteAsync(int id, CancellationToken cancellationToken)
+        public async Task DeleteAsync(IEnumerable<int> ids, CancellationToken cancellationToken)
         {
-            var carrier = await context.Carriers
-                .FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
-                ?? throw new NotFoundException("Carrier not found");
-
-            var deliveryNotesTask = context.DeliveryNotes.AnyAsync(dn => dn.CarrierId == id, cancellationToken);
-            var invoicesTask = context.Invoices.AnyAsync(i => i.CarrierId == id, cancellationToken);
-            var paymentOrdersTask = context.PaymentOrders.AnyAsync(po => po.CarrierId == id, cancellationToken);
-
-            await Task.WhenAll(deliveryNotesTask, invoicesTask, paymentOrdersTask);
-
-            if (await deliveryNotesTask)
-                throw new ConflictException("Cannot delete carrier because it is associated with one or more delivery notes");
-
-            if (await invoicesTask)
-                throw new ConflictException("Cannot delete carrier because it is associated with one or more invoices");
-
-            if (await paymentOrdersTask)
-                throw new ConflictException("Cannot delete carrier because it is associated with one or more payment orders");
-
-            context.Carriers.Remove(carrier);
-            await context.SaveChangesAsync(cancellationToken);
-        }
-
-        public async Task DeleteBulkAsync(IEnumerable<int> ids, CancellationToken cancellationToken)
-        {
-            // Validación moderna de parámetro
             ArgumentNullException.ThrowIfNull(ids);
-
             var idList = ids.Distinct().ToList();
             if (idList.Count == 0) return;
 
-            // 1. Verificar existencia de los Carriers
-            var existingCarriers = await context.Carriers
+            var existingIds = await context.Carriers
                 .Where(c => idList.Contains(c.Id))
+                .Select(c => c.Id)
                 .ToListAsync(cancellationToken);
 
-            if (existingCarriers.Count != idList.Count)
+            if (existingIds.Count != idList.Count)
                 throw new NotFoundException("Some of the specified carriers were not found");
 
-            // 2. Verificación masiva de dependencias (Estrategia de unión)
-            // Buscamos todos los IDs que tienen alguna relación en una sola pasada por tabla
-            var idsWithConflicts = await context.DeliveryNotes
+            var conflictIds = await context.DeliveryNotes
                 .Where(dn => idList.Contains(dn.CarrierId)).Select(dn => dn.CarrierId)
-                .Union(context.Invoices
-                    .Where(i => idList.Contains(i.CarrierId)).Select(i => i.CarrierId))
-                .Union(context.PaymentOrders
-                    .Where(po => idList.Contains(po.CarrierId)).Select(po => po.CarrierId))
+                .Union(context.Invoices.Where(i => idList.Contains(i.CarrierId)).Select(i => i.CarrierId))
+                .Union(context.PaymentOrders.Where(po => idList.Contains(po.CarrierId)).Select(po => po.CarrierId))
                 .Distinct()
                 .ToListAsync(cancellationToken);
 
-            if (idsWithConflicts.Any())
+            if (conflictIds.Any())
             {
-                // Mensaje detallado en inglés
                 throw new ConflictException(
-                    $"Operation aborted. {idsWithConflicts.Count} carrier(s) cannot be deleted due to existing associations with delivery notes, invoices, or payment orders.");
+                    $"Operation aborted. {conflictIds.Count} carrier(s) cannot be deleted due to existing associations with delivery notes, invoices, or payment orders.");
             }
 
-            // 3. Eliminación en lote
-            context.Carriers.RemoveRange(existingCarriers);
-            await context.SaveChangesAsync(cancellationToken);
+            await context.Carriers
+                .Where(c => idList.Contains(c.Id))
+                .ExecuteDeleteAsync(cancellationToken);
         }
     }
 }

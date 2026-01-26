@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace norviguet_control_fletes_api.Models.DTOs.Seller
 {
-    public class CreateSellerDto
+    public class SellerUpdateDto
     {
         [Required]
         [StringLength(50, ErrorMessage = "Name must be between 1 and 50 characters long.")]

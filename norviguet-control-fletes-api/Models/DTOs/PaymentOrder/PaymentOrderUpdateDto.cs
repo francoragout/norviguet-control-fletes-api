@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace norviguet_control_fletes_api.Models.DTOs.PaymentOrder
 {
-    public class UpdatePaymentOrderDto
+    public class PaymentOrderUpdateDto
     {
         [Required]
         public string PaymentOrderNumber { get; set; } = string.Empty;

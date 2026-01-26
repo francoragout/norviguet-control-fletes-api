@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace norviguet_control_fletes_api.Models.DTOs.DeliveryNote
 {
-    public class CreateDeliveryNoteDto
+    public class DeliveryNoteUpdateDto
     {
         [Required]
         [RegularExpression("^\\d{5}-\\d{8}$", ErrorMessage = "DeliveryNoteNumber must have the format NNNNN-NNNNNNNN")]
