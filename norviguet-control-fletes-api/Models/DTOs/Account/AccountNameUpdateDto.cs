@@ -2,7 +2,7 @@
 
 namespace norviguet_control_fletes_api.Models.DTOs.Account
 {
-    public class UpdateProfileDto
+    public class AccountNameUpdateDto
     {
         [Required]
         [MinLength(2, ErrorMessage = "Name must be at least 2 characters long.")]

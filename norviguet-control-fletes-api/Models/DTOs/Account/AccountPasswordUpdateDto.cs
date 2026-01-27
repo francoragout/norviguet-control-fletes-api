@@ -2,7 +2,7 @@
 
 namespace norviguet_control_fletes_api.Models.DTOs.Account
 {
-    public class ChangeAccountPasswordDto
+    public class AccountPasswordUpdateDto
     {
         [Required]
         public string CurrentPassword { get; set; } = string.Empty;
