@@ -20,7 +20,7 @@ namespace norviguet_control_fletes_api.Services
                 .AsNoTracking()
                 .OrderByDescending(c => c.CreatedAt);
 
-            var totalCount = await query.CountAsync(cancellationToken);
+            var totalItems = await query.CountAsync(cancellationToken);
 
             var items = await query
                 .Skip(dto.GetSkip())
@@ -33,7 +33,7 @@ namespace norviguet_control_fletes_api.Services
                 Items = items,
                 Page = dto.Page,
                 PageSize = dto.PageSize,
-                TotalItems = totalCount
+                TotalItems = totalItems
             };
         }
 
@@ -74,7 +74,7 @@ namespace norviguet_control_fletes_api.Services
             }
             catch (DbUpdateConcurrencyException)
             {
-                throw new ConflictException("The carrier was modified by another user. Please refresh and try again.");
+                throw new ConflictException("The record you attempted to edit was modified by another user after you got the original value.");
             }
 
             return mapper.Map<CarrierDto>(carrier);
@@ -83,6 +83,7 @@ namespace norviguet_control_fletes_api.Services
         public async Task DeleteAsync(IEnumerable<int> ids, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(ids);
+
             var idList = ids.Distinct().ToList();
             if (idList.Count == 0) return;
 
