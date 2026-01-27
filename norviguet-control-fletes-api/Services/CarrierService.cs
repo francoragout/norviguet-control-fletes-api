@@ -65,8 +65,18 @@ namespace norviguet_control_fletes_api.Services
             var carrier = await context.Carriers
                 .FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
                 ?? throw new NotFoundException("Carrier not found");
+
             mapper.Map(dto, carrier);
-            await context.SaveChangesAsync(cancellationToken);
+
+            try
+            {
+                await context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new ConflictException("The carrier was modified by another user. Please refresh and try again.");
+            }
+
             return mapper.Map<CarrierDto>(carrier);
         }
 
