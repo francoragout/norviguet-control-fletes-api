@@ -4,7 +4,7 @@ namespace norviguet_control_fletes_api.Services.Interfaces
 {
     public interface IPaymentOrderService
     {
-        Task<PaymentOrderDto> GetAllAsync(CancellationToken cancellationToken);
+        Task<IReadOnlyList<PaymentOrderDto>> GetAllAsync(CancellationToken cancellationToken);
         Task<PaymentOrderDto> GetByIdAsync(int id, CancellationToken cancellationToken);
         Task<PaymentOrderDto> CreateAsync(PaymentOrderCreateDto dto, CancellationToken cancellationToken);
         Task<PaymentOrderDto> UpdateAsync(int id, PaymentOrderUpdateDto dto, CancellationToken cancellationToken);

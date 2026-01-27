@@ -5,7 +5,7 @@ namespace norviguet_control_fletes_api.Services.Interfaces
 {
     public interface IDeliveryNoteService
     {
-        Task<DeliveryNoteDto> GetAllAsync(CancellationToken cancellationToken);
+        Task<IReadOnlyList<DeliveryNoteDto>> GetAllAsync(CancellationToken cancellationToken);
         Task<DeliveryNoteDto> GetByIdAsync(int id, CancellationToken cancellationToken);
         Task<DeliveryNoteDto> CreateAsync(DeliveryNoteCreateDto dto, CancellationToken cancellationToken);
         Task<DeliveryNoteDto> UpdateAsync(int id, DeliveryNoteUpdateDto dto, CancellationToken cancellationToken);

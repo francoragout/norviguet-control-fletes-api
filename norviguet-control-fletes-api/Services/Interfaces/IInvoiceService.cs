@@ -4,7 +4,7 @@ namespace norviguet_control_fletes_api.Services.Interfaces
 {
     public interface IInvoiceService
     {
-        Task<InvoiceDto> GetAllAsync(CancellationToken cancellationToken);
+        Task<IReadOnlyList<InvoiceDto>> GetAllAsync(CancellationToken cancellationToken);
         Task<InvoiceDto> GetByIdAsync(int id, CancellationToken cancellationToken);
         Task<InvoiceDto> CreateAsync(InvoiceCreateDto dto, CancellationToken cancellationToken);
         Task<InvoiceDto> UpdateAsync(int id, InvoiceUpdateDto dto, CancellationToken cancellationToken);
