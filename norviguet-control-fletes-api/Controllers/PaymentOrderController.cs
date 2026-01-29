@@ -19,7 +19,7 @@ namespace norviguet_control_fletes_api.Controllers
 
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(PaymentOrderDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<PaymentOrderDto>> GetById(int id, CancellationToken cancellationToken)
         {
             var result = await service.GetByIdAsync(id, cancellationToken);
@@ -28,7 +28,7 @@ namespace norviguet_control_fletes_api.Controllers
 
         [HttpPost]
         [ProducesResponseType(typeof(PaymentOrderDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<PaymentOrderDto>> Create([FromBody] PaymentOrderCreateDto dto, CancellationToken cancellationToken)
         {
             var result = await service.CreateAsync(dto, cancellationToken);
@@ -37,9 +37,9 @@ namespace norviguet_control_fletes_api.Controllers
 
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(PaymentOrderDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<PaymentOrderDto>> UpdatePaymentOrder(int id, [FromBody] PaymentOrderUpdateDto dto, CancellationToken cancellationToken)
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<PaymentOrderDto>> Update(int id, [FromBody] PaymentOrderUpdateDto dto, CancellationToken cancellationToken)
         {
             var result = await service.UpdateAsync(id, dto, cancellationToken);
             return Ok(result);
@@ -47,9 +47,9 @@ namespace norviguet_control_fletes_api.Controllers
 
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
-        public async Task<IActionResult> DeletePaymentOrder(int id, CancellationToken cancellationToken)
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
             await service.DeleteAsync([id], cancellationToken);
             return NoContent();
@@ -57,7 +57,7 @@ namespace norviguet_control_fletes_api.Controllers
 
         [HttpPost("bulk-delete")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> BulkDelete([FromBody] IEnumerable<int> ids, CancellationToken cancellationToken)
         {
             await service.DeleteAsync(ids, cancellationToken);

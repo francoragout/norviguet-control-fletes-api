@@ -4,6 +4,6 @@ namespace norviguet_control_fletes_api.Models.DTOs.Order
 {
     public class OrderStatusUpdateDto
     {
-        public OrderStatus Status { get; set; }
+        public string Status { get; set; } = "Pending";
     }
 }

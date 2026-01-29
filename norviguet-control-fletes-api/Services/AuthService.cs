@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using norviguet_control_fletes_api.Common.Middlewares;
 using norviguet_control_fletes_api.Data;
 using norviguet_control_fletes_api.Models.DTOs.Auth;
+using norviguet_control_fletes_api.Models.DTOs.User;
 using norviguet_control_fletes_api.Models.Entities;
-using norviguet_control_fletes_api.Services.Interfaces;
+using norviguet_control_fletes_api.Models.Enums;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -12,88 +14,184 @@ using System.Text;
 
 namespace norviguet_control_fletes_api.Services
 {
-    public class AuthService(ApplicationDbContext context, IConfiguration configuration) : IAuthService
+    public class AuthService(ApplicationDbContext context, IMapper mapper, IConfiguration configuration) : IAuthService
     {
-        public async Task<TokenResponseDto?> LoginAsync(LoginDto request)
+        public async Task<LoginResponseDto> LoginAsync(LoginDto dto, HttpContext httpContext, CancellationToken cancellationToken)
         {
             var user = await context.Users
                 .Include(u => u.RefreshTokens)
-                .FirstOrDefaultAsync(u => u.Email == request.Email);
+                .FirstOrDefaultAsync(u => u.Email == dto.Email, cancellationToken);
 
-            if (user is null) return null;
-
-            if (new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash, request.Password)
-                == PasswordVerificationResult.Failed)
+            if (user == null || !VerifyPassword(dto.Password, user.PasswordHash))
             {
-                return null;
+                throw new UnauthorizedException("Invalid email or password.");
             }
 
-            return await CreateTokenResponse(user, request.RememberMe);
-        }
+            var accessToken = GenerateAccessToken(user);
+            var refreshToken = GenerateRefreshToken();
+            var refreshTokenExpiresAt = dto.RememberMe ? DateTime.UtcNow.AddDays(30) : DateTime.UtcNow.AddDays(7);
 
-        private async Task<TokenResponseDto> CreateTokenResponse(User user, bool rememberMe = false)
-        {
-            // Revocar todos los tokens activos previos (filtrado en memoria)
-            var activeTokens = user.RefreshTokens
-                .ToList()
-                .Where(rt => rt.RevokedAt == null && rt.ExpiresAt > DateTime.UtcNow)
-                .ToList();
-
-            foreach (var token in activeTokens)
-                token.RevokedAt = DateTime.UtcNow;
-
-            await context.SaveChangesAsync();
-
-            // Generar y guardar nuevo refresh token
-            var refreshToken = await GenerateAndSaveRefreshTokenAsync(user, rememberMe);
-            var refreshTokenEntity = await context.RefreshTokens
-                .OrderByDescending(rt => rt.CreatedAt)
-                .FirstAsync(rt => rt.Token == refreshToken);
-
-            return new TokenResponseDto
+            var refreshTokenEntity = new RefreshToken
             {
-                AccessToken = CreateToken(user),
-                RefreshToken = refreshToken,
-                RefreshTokenExpiresAt = refreshTokenEntity.ExpiresAt
+                Token = refreshToken,
+                ExpiresAt = refreshTokenExpiresAt,
+                UserId = user.Id,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            context.RefreshTokens.Add(refreshTokenEntity);
+            await context.SaveChangesAsync(cancellationToken);
+
+            SetRefreshTokenCookie(httpContext, refreshToken, refreshTokenExpiresAt);
+
+            return new LoginResponseDto
+            {
+                AccessToken = accessToken,
+                AccessTokenExpiresAt = DateTime.UtcNow.AddMinutes(15)
             };
         }
 
-        public async Task<User?> RegisterAsync(RegisterDto request)
+        public async Task<UserDto> RegisterAsync(RegisterDto dto, CancellationToken cancellationToken)
         {
-            if (await context.Users.AnyAsync(u => u.Email == request.Email))
-                return null;
+            var existingUser = await context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email, cancellationToken);
+            if (existingUser != null)
+            {
+                throw new ConflictException("Email already exists.");
+            }
 
             var user = new User
             {
-                Name = request.Name,
-                Email = request.Email,
-                PasswordHash = new PasswordHasher<User>().HashPassword(null!, request.Password)
+                Name = dto.Name,
+                Email = dto.Email,
+                PasswordHash = HashPassword(dto.Password),
+                Role = UserRole.Pending,
+                CreatedAt = DateTime.UtcNow
             };
 
             context.Users.Add(user);
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(cancellationToken);
 
-            return user;
+            return mapper.Map<UserDto>(user);
         }
 
-        public async Task<TokenResponseDto?> RefreshTokensAsync(string refreshToken)
+        public async Task<LoginResponseDto> RefreshTokenAsync(HttpContext httpContext, CancellationToken cancellationToken)
         {
-            var tokenEntity = await context.RefreshTokens
-                .Include(rt => rt.User)
-                .FirstOrDefaultAsync(rt => rt.Token == refreshToken &&
-                                           rt.RevokedAt == null &&
-                                           rt.ExpiresAt > DateTime.UtcNow);
+            var refreshToken = httpContext.Request.Cookies["refreshToken"];
+            
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                throw new UnauthorizedException("Refresh token not found in cookies.");
+            }
 
-            if (tokenEntity == null) return null;
+            var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+            {
+                var storedToken = await context.RefreshTokens
+                    .Include(rt => rt.User)
+                    .FirstOrDefaultAsync(rt => rt.Token == refreshToken && rt.IsActive, cancellationToken);
 
-            // Revocar el token actual
-            tokenEntity.RevokedAt = DateTime.UtcNow;
-            await context.SaveChangesAsync();
+                if (storedToken == null)
+                {
+                    throw new UnauthorizedException("Invalid or expired refresh token.");
+                }
 
-            return await CreateTokenResponse(tokenEntity.User);
+                userId = storedToken.UserId;
+            }
+
+            var user = await context.Users
+                .Include(u => u.RefreshTokens)
+                .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+            if (user == null)
+            {
+                throw new NotFoundException("User not found.");
+            }
+
+            var existingRefreshToken = user.RefreshTokens
+                .FirstOrDefault(rt => rt.Token == refreshToken && rt.IsActive);
+
+            if (existingRefreshToken == null)
+            {
+                throw new UnauthorizedException("Invalid or expired refresh token.");
+            }
+
+            var accessToken = GenerateAccessToken(user);
+            var newRefreshToken = GenerateRefreshToken();
+            var refreshTokenExpiresAt = existingRefreshToken.ExpiresAt;
+
+            existingRefreshToken.RevokedAt = DateTime.UtcNow;
+
+            var newRefreshTokenEntity = new RefreshToken
+            {
+                Token = newRefreshToken,
+                ExpiresAt = refreshTokenExpiresAt,
+                UserId = user.Id,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            context.RefreshTokens.Add(newRefreshTokenEntity);
+            await context.SaveChangesAsync(cancellationToken);
+
+            SetRefreshTokenCookie(httpContext, newRefreshToken, refreshTokenExpiresAt);
+
+            return new LoginResponseDto
+            {
+                AccessToken = accessToken,
+                AccessTokenExpiresAt = DateTime.UtcNow.AddMinutes(15)
+            };
         }
 
-        private string GenerateRefreshToken()
+        public async Task RevokeTokenAsync(HttpContext httpContext, CancellationToken cancellationToken)
+        {
+            var refreshToken = httpContext.Request.Cookies["refreshToken"];
+            
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                throw new UnauthorizedException("Refresh token not found in cookies.");
+            }
+
+            var storedToken = await context.RefreshTokens
+                .Include(rt => rt.User)
+                .FirstOrDefaultAsync(rt => rt.Token == refreshToken && rt.IsActive, cancellationToken);
+
+            if (storedToken == null)
+            {
+                throw new NotFoundException("Refresh token not found or already revoked.");
+            }
+
+            storedToken.RevokedAt = DateTime.UtcNow;
+            await context.SaveChangesAsync(cancellationToken);
+
+            DeleteRefreshTokenCookie(httpContext);
+        }
+
+        private string GenerateAccessToken(User user)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(configuration["AppSettings:Token"] ?? throw new InvalidOperationException("Token key not configured"));
+
+            var claims = new List<Claim>
+            {
+                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new(ClaimTypes.Name, user.Name),
+                new(ClaimTypes.Email, user.Email),
+                new(ClaimTypes.Role, user.Role.ToString())
+            };
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddMinutes(15),
+                Issuer = configuration["AppSettings:Issuer"],
+                Audience = configuration["AppSettings:Audience"],
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
+        }
+
+        private static string GenerateRefreshToken()
         {
             var randomNumber = new byte[32];
             using var rng = RandomNumberGenerator.Create();
@@ -101,99 +199,38 @@ namespace norviguet_control_fletes_api.Services
             return Convert.ToBase64String(randomNumber);
         }
 
-        private async Task<string> GenerateAndSaveRefreshTokenAsync(User user, bool rememberMe = false)
+        private static string HashPassword(string password)
         {
-            var refreshToken = new RefreshToken
+            return BCrypt.Net.BCrypt.HashPassword(password);
+        }
+
+        private static bool VerifyPassword(string password, string passwordHash)
+        {
+            return BCrypt.Net.BCrypt.Verify(password, passwordHash);
+        }
+
+        private static void SetRefreshTokenCookie(HttpContext httpContext, string refreshToken, DateTime expiresAt)
+        {
+            var cookieOptions = new CookieOptions
             {
-                Token = GenerateRefreshToken(),
-                UserId = user.Id,
-                CreatedAt = DateTime.UtcNow,
-                ExpiresAt = rememberMe ? DateTime.UtcNow.AddDays(30) : DateTime.UtcNow.AddDays(7)
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = expiresAt
             };
 
-            context.RefreshTokens.Add(refreshToken);
-            await context.SaveChangesAsync();
-
-            return refreshToken.Token;
+            httpContext.Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
         }
 
-        private string CreateToken(User user)
+        private static void DeleteRefreshTokenCookie(HttpContext httpContext)
         {
-            var claims = new List<Claim>
+            httpContext.Response.Cookies.Delete("refreshToken", new CookieOptions
             {
-                new Claim("email", user.Email),
-                new Claim("id", user.Id.ToString()),
-                new Claim("role", user.Role.ToString()),
-                new Claim("name", user.Name)
-            };
-
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(configuration.GetValue<string>("AppSettings:Token")!));
-
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
-
-            var tokenDescriptor = new JwtSecurityToken(
-                issuer: configuration.GetValue<string>("AppSettings:Issuer"),
-                audience: configuration.GetValue<string>("AppSettings:Audience"),
-                claims: claims,
-                expires: DateTime.UtcNow.AddDays(1),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
-        }
-
-        public async Task<User?> GetUserByEmailAsync(string email)
-        {
-            return await context.Users
-                .Include(u => u.RefreshTokens)
-                .FirstOrDefaultAsync(u => u.Email == email);
-        }
-
-        public async Task<User?> GetUserByRefreshTokenAsync(string refreshToken)
-        {
-            var tokenEntity = await context.RefreshTokens
-                .Include(rt => rt.User)
-                .FirstOrDefaultAsync(rt => rt.Token == refreshToken &&
-                                           rt.RevokedAt == null &&
-                                           rt.ExpiresAt > DateTime.UtcNow);
-
-            return tokenEntity?.User;
-        }
-
-        public async Task InvalidateRefreshTokenAsync(string refreshToken)
-        {
-            var tokenEntity = await context.RefreshTokens
-                .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
-
-            if (tokenEntity != null && tokenEntity.RevokedAt == null && tokenEntity.ExpiresAt > DateTime.UtcNow)
-            {
-                tokenEntity.RevokedAt = DateTime.UtcNow;
-                await context.SaveChangesAsync();
-            }
-        }
-
-        public async Task<RefreshToken?> GetLatestActiveRefreshTokenAsync(User user)
-        {
-            var refreshToken = user.RefreshTokens
-                .ToList() // cargar en memoria
-                .Where(rt => rt.RevokedAt == null && rt.ExpiresAt > DateTime.UtcNow)
-                .OrderByDescending(rt => rt.CreatedAt)
-                .FirstOrDefault();
-
-            return await Task.FromResult(refreshToken);
-        }
-
-        public bool VerifyPassword(string password, string passwordHash)
-        {
-            // Puedes reutilizar PasswordHasher de Microsoft.AspNetCore.Identity
-            var result = new PasswordHasher<User>().VerifyHashedPassword(null!, passwordHash, password);
-            return result == PasswordVerificationResult.Success;
-        }
-
-        public string HashPassword(string password)
-        {
-            return new PasswordHasher<User>().HashPassword(null!, password);
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict
+            });
         }
     }
 }
+

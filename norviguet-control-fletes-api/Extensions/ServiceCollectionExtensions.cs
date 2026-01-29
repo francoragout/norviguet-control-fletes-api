@@ -14,9 +14,15 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<ICustomerService, CustomerService>();
+        services.AddScoped<ISellerService, SellerService>();
+        services.AddScoped<IDeliveryNoteService, DeliveryNoteService>();
+        services.AddScoped<IInvoiceService, InvoiceService>();
+        services.AddScoped<IPaymentOrderService, PaymentOrderService>();
         services.AddScoped<ICarrierService, CarrierService>();
-        services.AddScoped<IOrderService, OrderService>();
+        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IAccountService, AccountService>();
+        services.AddScoped<IAuthService, AuthService>();
 
         return services;
     }
@@ -25,27 +31,6 @@ public static class ServiceCollectionExtensions
     {
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
-
-        return services;
-    }
-
-    public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
-    {
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidIssuer = configuration["AppSettings:Issuer"],
-                    ValidateAudience = true,
-                    ValidAudience = configuration["AppSettings:Audience"],
-                    ValidateLifetime = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(configuration["AppSettings:Token"]!)),
-                    ValidateIssuerSigningKey = true
-                };
-            });
 
         return services;
     }
@@ -78,6 +63,37 @@ public static class ServiceCollectionExtensions
                     .AllowAnyMethod()
                     .AllowCredentials());
         });
+
+        return services;
+    }
+
+    public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
+    {
+        var key = Encoding.ASCII.GetBytes(configuration["AppSettings:Token"] ?? throw new InvalidOperationException("Token key not configured"));
+
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(options =>
+        {
+            options.RequireHttpsMetadata = false;
+            options.SaveToken = true;
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = true,
+                ValidIssuer = configuration["AppSettings:Issuer"],
+                ValidateAudience = true,
+                ValidAudience = configuration["AppSettings:Audience"],
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            };
+        });
+
+        services.AddAuthorization();
 
         return services;
     }

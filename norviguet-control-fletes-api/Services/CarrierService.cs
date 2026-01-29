@@ -45,12 +45,19 @@ namespace norviguet_control_fletes_api.Services
                 .ProjectTo<CarrierDto>(mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync(cancellationToken)
                 ?? throw new NotFoundException("Carrier not found");
+
             return carrier;
         }
 
         public async Task<CarrierDto> CreateAsync(CarrierCreateDto dto, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(dto);
+
+            var nameExists = await context.Carriers
+                .AnyAsync(c => c.Name == dto.Name, cancellationToken);
+
+            if (nameExists)
+                throw new ConflictException($"A carrier with the name '{dto.Name}' already exists");
 
             var carrier = mapper.Map<Carrier>(dto);
             context.Carriers.Add(carrier);
@@ -66,7 +73,18 @@ namespace norviguet_control_fletes_api.Services
                 .FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
                 ?? throw new NotFoundException("Carrier not found");
 
+            if (carrier.Name != dto.Name)
+            {
+                var nameExists = await context.Carriers
+                    .AnyAsync(c => c.Name == dto.Name && c.Id != id, cancellationToken);
+
+                if (nameExists)
+                    throw new ConflictException(
+                        $"A carrier with the name '{dto.Name}' already exists");
+            }
+
             mapper.Map(dto, carrier);
+            context.Entry(carrier).Property(x => x.RowVersion).OriginalValue = dto.RowVersion;
 
             try
             {
@@ -74,17 +92,20 @@ namespace norviguet_control_fletes_api.Services
             }
             catch (DbUpdateConcurrencyException)
             {
-                throw new ConflictException("The record you attempted to edit was modified by another user after you got the original value.");
+                throw new ConflictException(
+                    "The record was modified by another user. Please reload and try again.");
             }
 
             return mapper.Map<CarrierDto>(carrier);
         }
+
 
         public async Task DeleteAsync(IEnumerable<int> ids, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(ids);
 
             var idList = ids.Distinct().ToList();
+
             if (idList.Count == 0) return;
 
             var existingIds = await context.Carriers

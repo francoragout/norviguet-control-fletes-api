@@ -8,7 +8,16 @@ namespace norviguet_control_fletes_api.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<Carrier> builder)
         {
-            // Relationships are configured in related entities
+            builder.Property(c => c.Name)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            builder.HasIndex(c => c.Name)
+                .IsUnique();
+
+            builder.Property(c => c.RowVersion)
+                .IsRowVersion()
+                .IsConcurrencyToken();
         }
     }
 }

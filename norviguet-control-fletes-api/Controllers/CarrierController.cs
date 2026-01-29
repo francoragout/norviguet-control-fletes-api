@@ -29,7 +29,8 @@ namespace norviguet_control_fletes_api.Controllers
 
         [HttpPost]
         [ProducesResponseType(typeof(CarrierDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
         public async Task<ActionResult<CarrierDto>> Create([FromBody] CarrierCreateDto dto, CancellationToken cancellationToken)
         {
             var result = await service.CreateAsync(dto, cancellationToken);
@@ -38,9 +39,10 @@ namespace norviguet_control_fletes_api.Controllers
 
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(CarrierDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<CarrierDto>> UpdateCarrier(int id, [FromBody] CarrierUpdateDto dto, CancellationToken cancellationToken)
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+        public async Task<ActionResult<CarrierDto>> Update(int id, [FromBody] CarrierUpdateDto dto, CancellationToken cancellationToken)
         {
             var result = await service.UpdateAsync(id, dto, cancellationToken);
             return Ok(result);
@@ -49,18 +51,19 @@ namespace norviguet_control_fletes_api.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
-        public async Task<IActionResult> DeleteCarrier(int id, CancellationToken cancellationToken)
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
             await service.DeleteAsync([id], cancellationToken);
             return NoContent();
         }
 
-        [HttpPost("bulk-delete")]
+        [HttpDelete("bulk-delete")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
-        public async Task<IActionResult> DeleteCarriersBulk([FromBody] List<int> ids, CancellationToken cancellationToken)
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> BulkDelete([FromBody] List<int> ids, CancellationToken cancellationToken)
         {
             await service.DeleteAsync(ids, cancellationToken);
             return NoContent();

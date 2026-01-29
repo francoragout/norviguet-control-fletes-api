@@ -87,24 +87,22 @@ namespace norviguet_control_fletes_api.Services
             var idList = ids.Distinct().ToList();
             if (idList.Count == 0) return;
 
-            var customers = await context.Customers
-                .Where(c => idList.Contains(c.Id))
-                .Select(c => c.Id)
-                .ToListAsync(cancellationToken);
+            var existingCount = await context.Customers
+                .CountAsync(c => idList.Contains(c.Id), cancellationToken);
 
-            if (customers.Count != idList.Count)
-                throw new NotFoundException("Some of the specified customers were not found");
-            
-           var conflictIds = await context.Orders
+            if (existingCount != idList.Count)
+                throw new NotFoundException("Some customers were not found.");
+
+            var conflictCount = await context.Orders
                 .Where(o => idList.Contains(o.CustomerId))
                 .Select(o => o.CustomerId)
                 .Distinct()
-                .ToListAsync(cancellationToken);
+                .CountAsync(cancellationToken);
 
-            if (conflictIds.Any())
+            if (conflictCount > 0)
             {
                 throw new ConflictException(
-                   $"Operation aborted. {conflictIds.Count} customer(s) cannot be deleted due to existing associations with orders.");
+                    $"Operation aborted. {conflictCount} customer(s) cannot be deleted due to existing orders.");
             }
 
             await context.Customers

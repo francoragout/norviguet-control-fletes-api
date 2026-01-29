@@ -6,6 +6,6 @@ namespace norviguet_control_fletes_api.Services.Interfaces
     {
         Task<AccountDto> GetByIdAsync(int id, CancellationToken cancellationToken);
         Task<AccountDto> UpdateNameAsync(int id, AccountNameUpdateDto dto, CancellationToken cancellationToken);
-        Task<AccountDto> UpdatePasswordAsync(int id, string newEmail, CancellationToken cancellationToken);
+        Task<AccountDto> UpdatePasswordAsync(int id, AccountPasswordUpdateDto dto, CancellationToken cancellationToken);
     }
 }
