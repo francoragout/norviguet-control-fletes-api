@@ -28,13 +28,13 @@ namespace norviguet_control_fletes_api.Services
                 .FirstOrDefaultAsync(u => u.Id == id, cancellationToken)
                 ?? throw new NotFoundException("User not found");
 
-            if (!Enum.TryParse<UserRole>(dto.Role, true, out var role) ||
-                !Enum.IsDefined(typeof(UserRole), role))
+            if (!Enum.TryParse<UserRole>(dto.Role, true, out var newRole) ||
+                !Enum.IsDefined(typeof(UserRole), newRole))
             {
                 throw new ArgumentException($"Invalid role: {dto.Role}");
             }
 
-            user.Role = role;
+            user.Role = newRole;
             await context.SaveChangesAsync(cancellationToken);
             return mapper.Map<UserDto>(user);
         }
