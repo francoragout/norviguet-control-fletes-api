@@ -57,7 +57,8 @@ namespace norviguet_control_fletes_api.Services
                 .AnyAsync(c => c.Name == dto.Name, cancellationToken);
 
             if (nameExists)
-                throw new ConflictException($"A carrier with the name '{dto.Name}' already exists");
+                throw new ConflictException(
+                    $"A carrier with the name '{dto.Name}' already exists");
 
             var carrier = mapper.Map<Carrier>(dto);
             context.Carriers.Add(carrier);

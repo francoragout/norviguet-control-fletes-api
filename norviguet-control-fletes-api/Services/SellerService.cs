@@ -45,6 +45,7 @@ namespace norviguet_control_fletes_api.Services
                 .ProjectTo<SellerDto>(mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync(cancellationToken)
                 ?? throw new NotFoundException("Seller not found");
+
             return seller;
         }
 
@@ -74,7 +75,8 @@ namespace norviguet_control_fletes_api.Services
             }
             catch (DbUpdateConcurrencyException)
             {
-                throw new ConflictException("The record you attempted to edit was modified by another user after you got the original value.");
+                throw new ConflictException(
+                    "The record was modified by another user. Please reload and try again.");
             }
 
             return mapper.Map<SellerDto>(seller);
@@ -85,24 +87,27 @@ namespace norviguet_control_fletes_api.Services
             ArgumentNullException.ThrowIfNull(ids);
 
             var idList = ids.Distinct().ToList();
+
             if (idList.Count == 0) return;
 
-            var existingCount = await context.Sellers
-                .CountAsync(c => idList.Contains(c.Id), cancellationToken);
+            var existingIds = await context.Sellers
+                .Where(c => idList.Contains(c.Id))
+                .Select(c => c.Id)
+                .ToListAsync(cancellationToken);
 
-            if (existingCount != idList.Count)
-                throw new NotFoundException("Some sellers were not found.");
+            if (existingIds.Count != idList.Count)
+                throw new NotFoundException("Some of the specified carriers were not found");
 
-            var conflictCount = await context.Orders
+            var conflictIds = await context.Orders
                 .Where(o => idList.Contains(o.SellerId))
                 .Select(o => o.SellerId)
                 .Distinct()
-                .CountAsync(cancellationToken);
+                .ToListAsync(cancellationToken);
 
-            if (conflictCount > 0)
+            if (conflictIds.Any())
             {
                 throw new ConflictException(
-                    $"Operation aborted. {conflictCount} seller(s) cannot be deleted due to existing orders.");
+                    $"Operation aborted. {conflictIds.Count} seller(s) cannot be deleted due to existing orders.");
             }
 
             await context.Sellers

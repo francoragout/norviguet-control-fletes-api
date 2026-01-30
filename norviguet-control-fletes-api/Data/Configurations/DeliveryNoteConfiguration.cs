@@ -9,10 +9,23 @@ namespace norviguet_control_fletes_api.Data.Configurations
         public void Configure(EntityTypeBuilder<DeliveryNote> builder)
         {
             builder.Property(dn => dn.Status)
+                .IsRequired()
                 .HasConversion<string>();
+
+            builder.Property(dn => dn.DeliveryNoteNumber)
+                .IsRequired()
+                .HasMaxLength(14);
 
             builder.HasIndex(dn => dn.DeliveryNoteNumber)
                 .IsUnique();
+
+            builder.Property(dn => dn.Address)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            builder.Property(dn => dn.Location)
+                .IsRequired()
+                .HasMaxLength(100);
 
             builder.HasOne(dn => dn.Carrier)
                 .WithMany(c => c.DeliveryNotes)

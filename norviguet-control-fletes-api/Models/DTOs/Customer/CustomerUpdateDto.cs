@@ -13,5 +13,6 @@ namespace norviguet_control_fletes_api.Models.DTOs.Customer
         [StringLength(50, ErrorMessage = "The business name must be between 1 and 50 characters long.")]
         public string? BusinessName { get; set; }
         public string? Email { get; set; }
+        public byte[] RowVersion { get; set; } = [];
     }
 }

@@ -45,12 +45,19 @@ namespace norviguet_control_fletes_api.Services
                 .ProjectTo<CustomerDto>(mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync(cancellationToken)
                 ?? throw new NotFoundException("Customer not found");
+
             return customer;
         }
 
         public async Task<CustomerDto> CreateAsync(CustomerCreateDto dto, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(dto);
+
+            var nameExists = await context.Customers
+                .AnyAsync(c => c.Name == dto.Name, cancellationToken);
+
+            if (nameExists)
+                throw new ConflictException("A customer with the same name already exists.");
 
             var customer = mapper.Map<Customer>(dto);
             context.Customers.Add(customer);
@@ -66,7 +73,17 @@ namespace norviguet_control_fletes_api.Services
                 .FirstOrDefaultAsync(c => c.Id == id, cancellationToken)
                 ?? throw new NotFoundException("Customer not found");
 
+            if (customer.Name != dto.Name)
+            {
+                var nameExists = await context.Customers
+                    .AnyAsync(c => c.Name == dto.Name && c.Id != id, cancellationToken);
+                if (nameExists)
+                    throw new ConflictException(
+                        $"A customer with the same name '{dto.Name}' already exists.");
+            }
+
             mapper.Map(dto, customer);
+            context.Entry(customer).Property("RowVersion").OriginalValue = dto.RowVersion;
 
             try
             {
@@ -74,7 +91,8 @@ namespace norviguet_control_fletes_api.Services
             }
             catch (DbUpdateConcurrencyException)
             {
-                throw new ConflictException("The record you attempted to edit was modified by another user after you got the original value.");
+                throw new ConflictException(
+                    "The record you attempted to edit was modified by another user after you got the original value.");
             }
 
             return mapper.Map<CustomerDto>(customer);
@@ -85,24 +103,25 @@ namespace norviguet_control_fletes_api.Services
             ArgumentNullException.ThrowIfNull(ids);
 
             var idList = ids.Distinct().ToList();
+
             if (idList.Count == 0) return;
 
-            var existingCount = await context.Customers
+            var existingIds = await context.Customers
                 .CountAsync(c => idList.Contains(c.Id), cancellationToken);
 
-            if (existingCount != idList.Count)
-                throw new NotFoundException("Some customers were not found.");
+            if (existingIds != idList.Count)
+                throw new NotFoundException("Some of the specified customers were not found.");
 
-            var conflictCount = await context.Orders
+            var conflictIds = await context.Orders
                 .Where(o => idList.Contains(o.CustomerId))
                 .Select(o => o.CustomerId)
                 .Distinct()
-                .CountAsync(cancellationToken);
+                .ToListAsync(cancellationToken);
 
-            if (conflictCount > 0)
+            if (conflictIds.Any())
             {
                 throw new ConflictException(
-                    $"Operation aborted. {conflictCount} customer(s) cannot be deleted due to existing orders.");
+                    $"Operation aborted. {conflictIds} customer(s) cannot be deleted due to existing orders.");
             }
 
             await context.Customers

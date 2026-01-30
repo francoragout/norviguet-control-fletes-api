@@ -10,7 +10,8 @@ namespace norviguet_control_fletes_api.Models.Profiles
         {
             CreateMap<Customer, CustomerDto>();
             CreateMap<CustomerCreateDto, Customer>();
-            CreateMap<CustomerUpdateDto, Customer>();
+            CreateMap<CustomerUpdateDto, Customer>()
+                .ForMember(dest => dest.RowVersion, opt => opt.Ignore());
         }
     }
 }

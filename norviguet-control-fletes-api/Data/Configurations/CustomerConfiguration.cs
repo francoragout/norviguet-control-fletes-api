@@ -8,7 +8,16 @@ namespace norviguet_control_fletes_api.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<Customer> builder)
         {
-            // Relationships are configured in Order entity
+            builder.Property(c => c.Name)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            builder.HasIndex(c => c.Name)
+                .IsUnique();
+
+            builder.Property(c => c.CUIT)
+                .IsRequired()
+                .HasMaxLength(13);
         }
     }
 }

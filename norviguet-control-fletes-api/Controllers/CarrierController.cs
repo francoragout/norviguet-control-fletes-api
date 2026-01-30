@@ -8,6 +8,7 @@ namespace norviguet_control_fletes_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CarrierController(ICarrierService service) : ControllerBase
     {
         [HttpGet]
@@ -20,7 +21,7 @@ namespace norviguet_control_fletes_api.Controllers
 
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(CarrierDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<CarrierDto>> GetById(int id, CancellationToken cancellationToken)
         {
             var result = await service.GetByIdAsync(id, cancellationToken);
@@ -28,6 +29,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin, Logistics")]
         [ProducesResponseType(typeof(CarrierDto), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
@@ -38,6 +40,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin, Logistics")]
         [ProducesResponseType(typeof(CarrierDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -49,8 +52,9 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin, Logistics")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
@@ -59,6 +63,7 @@ namespace norviguet_control_fletes_api.Controllers
         }
 
         [HttpDelete("bulk-delete")]
+        [Authorize(Roles = "Admin, Logistics")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]

@@ -8,10 +8,10 @@ namespace norviguet_control_fletes_api.Models.DTOs.DeliveryNote
         [RegularExpression("^\\d{5}-\\d{8}$", ErrorMessage = "DeliveryNoteNumber must have the format NNNNN-NNNNNNNN")]
         public string DeliveryNoteNumber { get; set; } = string.Empty;
         [Required]
-        [StringLength(50, ErrorMessage = "Address must be between 1 and 50 characters long.")]
+        [StringLength(100, ErrorMessage = "Address must be between 1 and 100 characters long.")]
         public string Address { get; set; } = string.Empty;
         [Required]
-        [StringLength(50, ErrorMessage = "Location must be between 1 and 50 characters long.")]
+        [StringLength(100, ErrorMessage = "Location must be between 1 and 100 characters long.")]
         public string Location { get; set; } = string.Empty;
 
         // Foreign Keys
