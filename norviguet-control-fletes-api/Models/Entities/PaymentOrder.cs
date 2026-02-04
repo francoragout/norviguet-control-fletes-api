@@ -2,7 +2,7 @@
 {
     public class PaymentOrder : AuditableEntity
     {
-        public string PaymentOrderNumber { get; set; } = string.Empty;
+        public string Number { get; set; } = string.Empty;
 
         // Foreign Keys
         public int OrderId { get; set; }

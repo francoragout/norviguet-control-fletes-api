@@ -7,7 +7,7 @@ namespace norviguet_control_fletes_api.Models.DTOs.Order
         public int Id { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
-        public string OrderNumber { get; set; } = string.Empty;
+        public string Number { get; set; } = string.Empty;
         public OrderIncoterm Incoterm { get; set; } = OrderIncoterm.CIF;
 
         // Foreign Keys

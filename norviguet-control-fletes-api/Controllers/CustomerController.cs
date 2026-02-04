@@ -21,7 +21,7 @@ namespace norviguet_control_fletes_api.Controllers
 
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(CustomerDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<CustomerDto>> GetById(int id, CancellationToken cancellationToken)
         {
             var result = await service.GetByIdAsync(id, cancellationToken);

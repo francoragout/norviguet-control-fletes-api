@@ -8,6 +8,7 @@ using norviguet_control_fletes_api.Models.DTOs.Order;
 using norviguet_control_fletes_api.Models.Entities;
 using norviguet_control_fletes_api.Models.Enums;
 using norviguet_control_fletes_api.Services.Interfaces;
+using System.ComponentModel.DataAnnotations;
 
 namespace norviguet_control_fletes_api.Services
 {
@@ -54,6 +55,17 @@ namespace norviguet_control_fletes_api.Services
         {
             ArgumentNullException.ThrowIfNull(dto);
 
+            await ValidateSellerExistsAsync(dto.SellerId, cancellationToken);
+            await ValidateCustomerExistsAsync(dto.CustomerId, cancellationToken);
+
+            var exists = await context.Orders
+                .AnyAsync(x => x.Number == dto.Number, cancellationToken);
+
+            if (exists)
+            {
+                throw new ConflictException($"An order with the number '{dto.Number}' already exists");
+            }
+
             var order = mapper.Map<Order>(dto);
             context.Orders.Add(order);
             await context.SaveChangesAsync(cancellationToken);
@@ -68,7 +80,28 @@ namespace norviguet_control_fletes_api.Services
                 .FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
                 ?? throw new NotFoundException("Order not found");
 
+            if (order.Status == OrderStatus.Closed)
+            {
+                throw new ConflictException("Closed orders cannot be modified.");
+            }
+
+            if (order.Number != dto.Number &&
+                await context.Orders.AnyAsync(x => x.Number == dto.Number, cancellationToken))
+            {
+                throw new ConflictException($"An order with the number '{dto.Number}' already exists");
+            }
+
+            var sellerOrCustomerChanged = order.SellerId != dto.SellerId || 
+                                           order.CustomerId != dto.CustomerId;
+
+            if (sellerOrCustomerChanged)
+            {
+                await ValidateSellerExistsAsync(dto.SellerId, cancellationToken);
+                await ValidateCustomerExistsAsync(dto.CustomerId, cancellationToken);
+            }
+
             mapper.Map(dto, order);
+            context.Entry(order).Property(x => x.RowVersion).OriginalValue = dto.RowVersion;
 
             try
             {
@@ -76,7 +109,8 @@ namespace norviguet_control_fletes_api.Services
             }
             catch (DbUpdateConcurrencyException)
             {
-                throw new ConflictException("The record you attempted to edit was modified by another user after you got the original value.");
+                throw new ConflictException(
+                    "The record was modified by another user. Please reload and try again.");
             }
 
             return mapper.Map<OrderDto>(order);
@@ -93,11 +127,22 @@ namespace norviguet_control_fletes_api.Services
             if (!Enum.TryParse<OrderStatus>(dto.Status, true, out var status) ||
                 !Enum.IsDefined(typeof(OrderStatus), status))
             {
-                throw new ArgumentException($"Invalid status: {dto.Status}");
+                throw new ValidationException($"Invalid status value: '{dto.Status}'");
             }
 
             order.Status = status;
-            await context.SaveChangesAsync(cancellationToken);
+            context.Entry(order).Property(x => x.RowVersion).OriginalValue = dto.RowVersion;
+
+            try
+            {
+                await context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new ConflictException(
+                    "The record was modified by another user. Please reload and try again.");
+            }
+
             return mapper.Map<OrderDto>(order);
         }
 
@@ -117,6 +162,29 @@ namespace norviguet_control_fletes_api.Services
             await context.Orders
                 .Where(o => idList.Contains(o.Id))
                 .ExecuteDeleteAsync(cancellationToken);
+        }
+
+        // Private validation methods
+        private async Task ValidateSellerExistsAsync(int sellerId, CancellationToken cancellationToken)
+        {
+            var sellerExists = await context.Sellers
+                .AnyAsync(x => x.Id == sellerId, cancellationToken);
+
+            if (!sellerExists)
+            {
+                throw new NotFoundException("Seller not found");
+            }
+        }
+
+        private async Task ValidateCustomerExistsAsync(int customerId, CancellationToken cancellationToken)
+        {
+            var customerExists = await context.Customers
+                .AnyAsync(x => x.Id == customerId, cancellationToken);
+
+            if (!customerExists)
+            {
+                throw new NotFoundException("Customer not found");
+            }
         }
     }
 }

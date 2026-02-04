@@ -17,8 +17,10 @@ namespace norviguet_control_fletes_api.Models.Profiles
                 .ForMember(dest => dest.DeliveryNotesCount, opt => opt.MapFrom(src =>
                     src.DeliveryNotes.Count(dn => dn.Status != DeliveryNoteStatus.Cancelled)));
             CreateMap<OrderCreateDto, Order>();
-            CreateMap<OrderUpdateDto, Order>();
-            CreateMap<OrderStatusUpdateDto, Order>();
+            CreateMap<OrderUpdateDto, Order>()
+                .ForMember(dest => dest.RowVersion, opt => opt.Ignore());
+            CreateMap<OrderStatusUpdateDto, Order>()
+                .ForMember(dest => dest.RowVersion, opt => opt.Ignore());
         }
     }
 }

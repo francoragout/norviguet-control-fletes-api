@@ -128,9 +128,11 @@ namespace norviguet_control_fletes_api.Services
             ArgumentNullException.ThrowIfNull(ids);
 
             var idList = ids.Distinct().ToList();
+
             if (idList.Count == 0) return;
 
             var invoices = await context.Invoices
+                .AsNoTracking()
                 .Include(i => i.Order)
                 .Where(i => idList.Contains(i.Id))
                 .ToListAsync(cancellationToken);
@@ -138,17 +140,20 @@ namespace norviguet_control_fletes_api.Services
             if (invoices.Count != idList.Count)
                 throw new NotFoundException("Some of the specified invoices were not found");
 
-            var notPendingOrders = invoices
-                .Where(i => i.Order.Status != OrderStatus.Pending)
+            var invalidOrders = invoices
+                .Where(i => i.Order.Status != OrderStatus.Pending && i.Order.Status != OrderStatus.Rejected)
                 .Select(i => i.Number)
                 .ToList();
 
-            if (notPendingOrders.Count > 0)
-                throw new ConflictException($"Invoices can only be deleted for orders with Pending status: {string.Join(", ", notPendingOrders)}");
+            if (invalidOrders.Count > 0)
+                throw new ConflictException($"Invoices can only be deleted for orders with Pending or Rejected status. Invalid invoices: {string.Join(", ", invalidOrders)}");
 
-            context.Invoices.RemoveRange(invoices);
-            await context.SaveChangesAsync(cancellationToken);
+            await context.Invoices
+                .Where(i => idList.Contains(i.Id))
+                .ExecuteDeleteAsync(cancellationToken);
         }
+
+        // Private validation methods
 
         private async Task ValidateCarrierExistsAsync(int carrierId, CancellationToken cancellationToken)
         {

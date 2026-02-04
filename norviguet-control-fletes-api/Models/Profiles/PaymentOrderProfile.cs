@@ -12,7 +12,8 @@ namespace norviguet_control_fletes_api.Models.Profiles
                 .ForMember(dest => dest.CarrierName, opt => opt.MapFrom(src => src.Carrier.Name))
                 .ForMember(dest => dest.OrderStatus, opt => opt.MapFrom(src => src.Order.Status.ToString()));
             CreateMap<PaymentOrderCreateDto, PaymentOrder>();
-            CreateMap<PaymentOrderUpdateDto, PaymentOrder>();
+            CreateMap<PaymentOrderUpdateDto, PaymentOrder>()
+                .ForMember(dest => dest.RowVersion, opt => opt.Ignore());
         }
     }
 }

@@ -32,6 +32,7 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Logistics")]
         [ProducesResponseType(typeof(DeliveryNoteDto), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
         public async Task<ActionResult<DeliveryNoteDto>> Create([FromBody] DeliveryNoteCreateDto dto, CancellationToken cancellationToken)
         {
@@ -78,6 +79,8 @@ namespace norviguet_control_fletes_api.Controllers
         [Authorize(Roles = "Admin, Logistics")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
         public async Task<IActionResult> BulkDelete([FromBody] IEnumerable<int> ids, CancellationToken cancellationToken)
         {
             await service.DeleteAsync(ids, cancellationToken);

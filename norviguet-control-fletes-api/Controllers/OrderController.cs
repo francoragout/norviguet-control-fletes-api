@@ -29,6 +29,8 @@ namespace norviguet_control_fletes_api.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(OrderDto), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
         public async Task<ActionResult<OrderDto>> Create([FromBody] OrderCreateDto dto, CancellationToken cancellationToken)
         {
             var result = await service.CreateAsync(dto, cancellationToken);

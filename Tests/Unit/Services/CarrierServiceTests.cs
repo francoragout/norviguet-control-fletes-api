@@ -428,7 +428,7 @@ namespace Tests.Unit.Services
             var order = new Order
             {
                 Id = 1,
-                OrderNumber = "ORD-001",
+                Number = "ORD-001",
                 SellerId = 1,
                 CustomerId = 1,
                 Seller = seller,
@@ -440,7 +440,7 @@ namespace Tests.Unit.Services
             var deliveryNote = new DeliveryNote
             {
                 Id = 1,
-                DeliveryNoteNumber = "DN-001",
+                Number = "DN-001",
                 CarrierId = 1,
                 OrderId = 1,
                 Order = order,
@@ -473,7 +473,7 @@ namespace Tests.Unit.Services
             var order = new Order
             {
                 Id = 1,
-                OrderNumber = "ORD-001",
+                Number = "ORD-001",
                 SellerId = 1,
                 CustomerId = 1,
                 Seller = seller,
@@ -485,7 +485,7 @@ namespace Tests.Unit.Services
             var invoice = new Invoice
             {
                 Id = 1,
-                InvoiceNumber = "INV-001",
+                Number = "INV-001",
                 CarrierId = 1,
                 OrderId = 1,
                 Order = order,
@@ -518,7 +518,7 @@ namespace Tests.Unit.Services
             var order = new Order
             {
                 Id = 1,
-                OrderNumber = "ORD-001",
+                Number = "ORD-001",
                 SellerId = 1,
                 CustomerId = 1,
                 Seller = seller,
@@ -530,7 +530,7 @@ namespace Tests.Unit.Services
             var paymentOrder = new PaymentOrder
             {
                 Id = 1,
-                PaymentOrderNumber = "PO-001",
+                Number = "PO-001",
                 CarrierId = 1,
                 OrderId = 1,
                 Order = order,

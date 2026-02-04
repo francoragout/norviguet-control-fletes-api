@@ -14,7 +14,7 @@ namespace norviguet_control_fletes_api.Data.Configurations
             builder.Property(o => o.Incoterm)
                 .HasConversion<string>();
 
-            builder.HasIndex(o => o.OrderNumber)
+            builder.HasIndex(o => o.Number)
                 .IsUnique();
 
             builder.HasMany(o => o.DeliveryNotes)

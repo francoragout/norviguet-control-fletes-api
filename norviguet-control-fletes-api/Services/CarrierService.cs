@@ -45,7 +45,6 @@ namespace norviguet_control_fletes_api.Services
                 .ProjectTo<CarrierDto>(mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync(cancellationToken)
                 ?? throw new NotFoundException("Carrier not found");
-
             return carrier;
         }
 

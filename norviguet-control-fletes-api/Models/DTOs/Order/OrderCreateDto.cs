@@ -6,7 +6,7 @@ namespace norviguet_control_fletes_api.Models.DTOs.Order
     public class OrderCreateDto
     {
         [Required]
-        public string OrderNumber { get; set; } = string.Empty;
+        public string Number { get; set; } = string.Empty;
         public OrderIncoterm Incoterm { get; set; } = OrderIncoterm.CIF;
 
         // Foreign Keys
