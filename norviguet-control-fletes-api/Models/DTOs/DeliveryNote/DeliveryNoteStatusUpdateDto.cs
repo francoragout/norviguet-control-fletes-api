@@ -3,5 +3,6 @@
     public class DeliveryNoteStatusUpdateDto
     {
         public string Status { get; set; } = "Pending";
+        public byte[] RowVersion { get; set; } = [];
     }
 }

@@ -14,11 +14,18 @@ namespace norviguet_control_fletes_api.Data.Configurations
             builder.Property(i => i.Price)
                 .HasPrecision(18, 2);
 
-            builder.HasIndex(i => i.InvoiceNumber)
+            builder.Property(i => i.Number)
+                .HasMaxLength(14);
+
+            builder.HasIndex(i => i.Number)
                 .IsUnique();
 
             builder.HasIndex(i => new { i.OrderId, i.CarrierId })
                 .IsUnique();
+
+            builder.Property(c => c.RowVersion)
+                .IsRowVersion()
+                .IsConcurrencyToken();
 
             builder.HasOne(i => i.Carrier)
                 .WithMany(c => c.Invoices)

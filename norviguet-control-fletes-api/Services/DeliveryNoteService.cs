@@ -37,24 +37,23 @@ namespace norviguet_control_fletes_api.Services
         {
             ArgumentNullException.ThrowIfNull(dto);
 
-            // 1. Check for unique DeliveryNoteNumber
-            var deliveryNoteNumberExists = await context.DeliveryNotes
-                .AnyAsync(d => d.DeliveryNoteNumber == dto.DeliveryNoteNumber, cancellationToken);
+            var exists = await context.DeliveryNotes
+                .AnyAsync(x => x.Number == dto.Number, cancellationToken);
 
-            if (deliveryNoteNumberExists)
-                throw new ConflictException(
-                    $"A delivery note with the number '{dto.DeliveryNoteNumber}' already exists");
+            if (exists)
+            {
+                throw new ConflictException($"A delivery note with the number '{dto.Number}' already exists");
+            }
 
-            // 2. Check that the associated Order is not Closed or Rejected
-            var orderStatus = await context.Orders
-                .Where(o => o.Id == dto.OrderId)
-                .Select(o => (OrderStatus?)o.Status)
-                .FirstOrDefaultAsync(cancellationToken)
+            var order = await context.Orders
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == dto.OrderId, cancellationToken)
                 ?? throw new NotFoundException("Order not found");
 
-            if (orderStatus is OrderStatus.Closed or OrderStatus.Rejected)
-                throw new ConflictException(
-                    $"Cannot create a delivery note for an order with status {orderStatus}.");
+            if (order.Status != OrderStatus.Pending)
+            {
+                throw new ConflictException("Delivery notes can only be created for orders with Pending status");
+            }
 
             var deliveryNote = mapper.Map<DeliveryNote>(dto);
             context.DeliveryNotes.Add(deliveryNote);
@@ -66,41 +65,24 @@ namespace norviguet_control_fletes_api.Services
         {
             ArgumentNullException.ThrowIfNull(dto);
 
-            // 1. Retrieve existing delivery note
             var deliveryNote = await context.DeliveryNotes
-                .FirstOrDefaultAsync(d => d.Id == id, cancellationToken)
+                .Include(x => x.Order)
+                .FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
                 ?? throw new NotFoundException("Delivery note not found");
 
-            // 2. Check that the delivery note is not Approved or Cancelled
-            if (deliveryNote.Status is DeliveryNoteStatus.Approved or DeliveryNoteStatus.Cancelled)
-                throw new ConflictException(
-                    $"Cannot update a delivery note with status '{deliveryNote.Status}'");
-
-            // 3. Check for unique DeliveryNoteNumber
-            if (deliveryNote.DeliveryNoteNumber != dto.DeliveryNoteNumber)
+            if (deliveryNote.Order.Status != OrderStatus.Pending)
             {
-                var deliverNoteyNumberExists = await context.DeliveryNotes
-                    .AnyAsync(d => d.DeliveryNoteNumber == dto.DeliveryNoteNumber, cancellationToken);
-
-                if (deliverNoteyNumberExists)
-                    throw new ConflictException(
-                        $"A delivery note with the number '{dto.DeliveryNoteNumber}' already exists");
+                throw new ConflictException("Delivery notes can only be updated for orders with Pending status");
             }
 
-            // 4. Check that the associated Order is not Closed or Rejected
-            var orderStatus = await context.Orders
-                .Where(o => o.Id == dto.OrderId)
-                .Select(o => (OrderStatus?)o.Status)
-                .FirstOrDefaultAsync(cancellationToken)
-                ?? throw new NotFoundException("Order not found");
+            if (deliveryNote.Number != dto.Number &&
+                await context.DeliveryNotes.AnyAsync(x => x.Number == dto.Number, cancellationToken))
+            {
+                throw new ConflictException($"A delivery note with the number '{dto.Number}' already exists");
+            }
 
-            if (orderStatus is OrderStatus.Closed or OrderStatus.Rejected)
-                throw new ConflictException(
-                    $"Cannot update a delivery note for an order with status {orderStatus}.");
-
-            // 5. Map and save changes with concurrency handling
             mapper.Map(dto, deliveryNote);
-            context.Entry(deliveryNote).Property(d => d.RowVersion).OriginalValue = dto.RowVersion;
+            context.Entry(deliveryNote).Property(x => x.RowVersion).OriginalValue = dto.RowVersion;
 
             try
             {
@@ -119,20 +101,34 @@ namespace norviguet_control_fletes_api.Services
         {
             ArgumentNullException.ThrowIfNull(dto);
 
-            // 1. Retrieve existing delivery note
             var deliveryNote = await context.DeliveryNotes
-                .FirstOrDefaultAsync(d => d.Id == id, cancellationToken)
+                .Include(x => x.Order)
+                .FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
                 ?? throw new NotFoundException("Delivery note not found");
 
-            // 2. Validate and parse new status
-            if (!Enum.TryParse<DeliveryNoteStatus>(dto.Status, true, out var newStatus) ||
-                !Enum.IsDefined(typeof(DeliveryNoteStatus), newStatus))
+            if (deliveryNote.Order.Status != OrderStatus.Pending)
             {
-                throw new ArgumentException($"Invalid status: {dto.Status}");
+                throw new ConflictException("Delivery note status can only be updated for orders with Pending status");
             }
 
-            deliveryNote.Status = newStatus;
-            await context.SaveChangesAsync(cancellationToken);
+            if (!Enum.TryParse<DeliveryNoteStatus>(dto.Status, true, out var status))
+            {
+                throw new ArgumentException($"Invalid status value: '{dto.Status}'");
+            }
+
+            deliveryNote.Status = status;
+            context.Entry(deliveryNote).Property(x => x.RowVersion).OriginalValue = dto.RowVersion;
+
+            try
+            {
+                await context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new ConflictException(
+                    "The record was modified by another user. Please reload and try again.");
+            }
+
             return mapper.Map<DeliveryNoteDto>(deliveryNote);
         }
 
@@ -141,35 +137,36 @@ namespace norviguet_control_fletes_api.Services
             ArgumentNullException.ThrowIfNull(ids);
 
             var idList = ids.Distinct().ToList();
+
             if (idList.Count == 0) return;
 
-            // 1. Validate existence and business rules in one efficient query
-            var validatableNotes = await context.DeliveryNotes
+            var deliveryNotes = await context.DeliveryNotes
+                .Include(d => d.Order)
                 .Where(d => idList.Contains(d.Id))
-                .Select(d => new { d.Id, IsClosed = d.Order.Status == OrderStatus.Closed })
                 .ToListAsync(cancellationToken);
 
-            // 2. Check if everything was found
-            if (validatableNotes.Count != idList.Count)
-                throw new NotFoundException("Some delivery notes were not found.");
+            if (deliveryNotes.Count != idList.Count)
+                throw new NotFoundException("Some of the specified delivery notes were not found");
 
-            // 3. Check business rules
-            if (validatableNotes.Any(n => n.IsClosed))
-                throw new ConflictException("Cannot delete delivery notes associated with closed orders.");
+            var notPendingOrders = deliveryNotes
+                .Where(d => d.Order.Status != OrderStatus.Pending)
+                .Select(d => d.Number)
+                .ToList();
 
-            // 4. Perform the bulk delete
-            await context.DeliveryNotes
-                .Where(d => idList.Contains(d.Id))
-                .ExecuteDeleteAsync(cancellationToken);
-        }
+            if (notPendingOrders.Count > 0)
+                throw new ConflictException($"Delivery notes can only be deleted for orders with Pending status: {string.Join(", ", notPendingOrders)}");
 
-        private async Task EnsureNumberIsUniqueAsync(string deliveryNoteNumber, int? excludeId, CancellationToken cancellationToken)
-        {
-            var exists = await context.DeliveryNotes
-                .AnyAsync(d => d.DeliveryNoteNumber == deliveryNoteNumber && (!excludeId.HasValue || d.Id != excludeId.Value), cancellationToken);
-            if (exists)
+            try
+            {
+                await context.DeliveryNotes
+                    .Where(d => idList.Contains(d.Id))
+                    .ExecuteDeleteAsync(cancellationToken);
+            }
+            catch (DbUpdateException)
+            {
                 throw new ConflictException(
-                    $"A delivery note with the number '{deliveryNoteNumber}' already exists");
+                    "One or more delivery notes cannot be deleted due to existing association with carriers.");
+            }
         }
     }
 }

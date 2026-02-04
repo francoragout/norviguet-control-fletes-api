@@ -5,7 +5,7 @@ namespace norviguet_control_fletes_api.Models.Entities
     public class Invoice : AuditableEntity
     {
         public InvoiceType Type { get; set; } = InvoiceType.A;
-        public string InvoiceNumber { get; set; } = string.Empty;
+        public string Number { get; set; } = string.Empty;
         public int Price { get; set; }
 
         // Foreign Keys

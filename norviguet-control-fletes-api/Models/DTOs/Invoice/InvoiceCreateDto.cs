@@ -9,7 +9,7 @@ namespace norviguet_control_fletes_api.Models.DTOs.Invoice
         public InvoiceType Type { get; set; } = InvoiceType.A;        
         [Required]
         [RegularExpression("^\\d{5}-\\d{8}$", ErrorMessage = "InvoiceNumber must have the format NNNNN-NNNNNNNN")]
-        public string InvoiceNumber { get; set; } = string.Empty;
+        public string Number { get; set; } = string.Empty;
         public int Price { get; set; }
 
         // Foreign Keys

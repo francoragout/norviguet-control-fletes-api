@@ -9,6 +9,7 @@ namespace norviguet_control_fletes_api.Models.Profiles
         public DeliveryNoteProfile()
         {
             CreateMap<DeliveryNote, DeliveryNoteDto>()
+                .ForMember(dest => dest.DeliveryNoteNumber, opt => opt.MapFrom(src => src.Number))
                 .ForMember(dest => dest.CarrierName, opt => opt.MapFrom(src => src.Carrier.Name))
                 .ForMember(dest => dest.OrderStatus, opt => opt.MapFrom(src => src.Order.Status.ToString()));
             CreateMap<DeliveryNoteCreateDto, DeliveryNote>();

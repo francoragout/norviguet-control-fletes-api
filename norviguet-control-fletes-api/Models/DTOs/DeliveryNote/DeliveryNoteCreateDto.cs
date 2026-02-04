@@ -5,8 +5,8 @@ namespace norviguet_control_fletes_api.Models.DTOs.DeliveryNote
     public class DeliveryNoteCreateDto
     {
         [Required]
-        [RegularExpression("^\\d{5}-\\d{8}$", ErrorMessage = "DeliveryNoteNumber must have the format NNNNN-NNNNNNNN")]
-        public string DeliveryNoteNumber { get; set; } = string.Empty;
+        [RegularExpression("^\\d{5}-\\d{8}$", ErrorMessage = "Number must have the format NNNNN-NNNNNNNN")]
+        public string Number { get; set; } = string.Empty;
         [Required]
         [StringLength(100, ErrorMessage = "Address must be between 1 and 100 characters long.")]
         public string Address { get; set; } = string.Empty;

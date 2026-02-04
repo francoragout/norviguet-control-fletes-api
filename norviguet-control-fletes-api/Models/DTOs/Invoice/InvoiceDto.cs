@@ -5,7 +5,7 @@ namespace norviguet_control_fletes_api.Models.DTOs.Invoice
         public int Id { get; set; }
         public DateTime CreatedAt { get; set; }
         public string Type { get; set; } = string.Empty;
-        public string InvoiceNumber { get; set; } = string.Empty;
+        public string Number { get; set; } = string.Empty;
         public int Price { get; set; }
 
         // Foreign Keys

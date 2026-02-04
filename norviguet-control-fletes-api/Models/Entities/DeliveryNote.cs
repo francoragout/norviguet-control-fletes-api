@@ -5,7 +5,7 @@ namespace norviguet_control_fletes_api.Models.Entities
     public class DeliveryNote : AuditableEntity
     {
         public DeliveryNoteStatus Status { get; set; } = DeliveryNoteStatus.Pending;
-        public string DeliveryNoteNumber { get; set; } = string.Empty;
+        public string Number { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
         public string Location { get; set; } = string.Empty;
 

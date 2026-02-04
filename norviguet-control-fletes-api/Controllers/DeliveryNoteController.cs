@@ -51,6 +51,18 @@ namespace norviguet_control_fletes_api.Controllers
             return Ok(result);
         }
 
+        [HttpPatch("{id}/status")]
+        [Authorize(Roles = "Admin, Logistics")]
+        [ProducesResponseType(typeof(DeliveryNoteDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+        public async Task<ActionResult<DeliveryNoteDto>> UpdateStatus(int id, [FromBody] DeliveryNoteStatusUpdateDto dto, CancellationToken cancellationToken)
+        {
+            var result = await service.UpdateStatusAsync(id, dto, cancellationToken);
+            return Ok(result);
+        }
+
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin, Logistics")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]

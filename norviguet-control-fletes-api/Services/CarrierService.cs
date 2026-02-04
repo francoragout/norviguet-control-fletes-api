@@ -53,12 +53,13 @@ namespace norviguet_control_fletes_api.Services
         {
             ArgumentNullException.ThrowIfNull(dto);
 
-            var nameExists = await context.Carriers
-                .AnyAsync(c => c.Name == dto.Name, cancellationToken);
+            var exists = await context.Carriers
+                .AnyAsync(x => x.Name == dto.Name, cancellationToken);
 
-            if (nameExists)
-                throw new ConflictException(
-                    $"A carrier with the name '{dto.Name}' already exists");
+            if (exists)
+            {
+                throw new ConflictException($"A carrier with the name '{dto.Name}' already exists");
+            }
 
             var carrier = mapper.Map<Carrier>(dto);
             context.Carriers.Add(carrier);
@@ -74,14 +75,10 @@ namespace norviguet_control_fletes_api.Services
                 .FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
                 ?? throw new NotFoundException("Carrier not found");
 
-            if (carrier.Name != dto.Name)
+            if (carrier.Name != dto.Name &&
+                await context.Carriers.AnyAsync(x => x.Name == dto.Name, cancellationToken))
             {
-                var nameExists = await context.Carriers
-                    .AnyAsync(c => c.Name == dto.Name && c.Id != id, cancellationToken);
-
-                if (nameExists)
-                    throw new ConflictException(
-                        $"A carrier with the name '{dto.Name}' already exists");
+                throw new ConflictException($"A carrier with the name '{dto.Name}' already exists");
             }
 
             mapper.Map(dto, carrier);
@@ -117,22 +114,17 @@ namespace norviguet_control_fletes_api.Services
             if (existingIds.Count != idList.Count)
                 throw new NotFoundException("Some of the specified carriers were not found");
 
-            var conflictIds = await context.DeliveryNotes
-                .Where(dn => idList.Contains(dn.CarrierId)).Select(dn => dn.CarrierId)
-                .Union(context.Invoices.Where(i => idList.Contains(i.CarrierId)).Select(i => i.CarrierId))
-                .Union(context.PaymentOrders.Where(po => idList.Contains(po.CarrierId)).Select(po => po.CarrierId))
-                .Distinct()
-                .ToListAsync(cancellationToken);
-
-            if (conflictIds.Any())
+            try
+            {
+                await context.Carriers
+                    .Where(c => idList.Contains(c.Id))
+                    .ExecuteDeleteAsync(cancellationToken);
+            }
+            catch (DbUpdateException)
             {
                 throw new ConflictException(
-                    $"Operation aborted. {conflictIds.Count} carrier(s) cannot be deleted due to existing associations with delivery notes, invoices, or payment orders.");
+                    "One or more carriers cannot be deleted due to existing associations with delivery notes, invoices, or payment orders.");
             }
-
-            await context.Carriers
-                .Where(c => idList.Contains(c.Id))
-                .ExecuteDeleteAsync(cancellationToken);
         }
     }
 }
